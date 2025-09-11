@@ -263,12 +263,11 @@ async function run() {
     failFast = false
   }
 
-  // Auto-detect architecture; allow explicit override to arm64 if provided.
-  // Note: We intentionally do not force 'amd64' from input to avoid masking auto-detection defaults.
+  // Auto-detect architecture; allow explicit override to 'amd64' or 'arm64' if provided.
   let archType = detectArchType()
   const inputArch = core.getInput('arch-type', {required: false}).toLowerCase()
-  if (inputArch === 'arm64') {
-    archType = 'arm64'
+  if (inputArch === 'arm64' || inputArch === 'amd64') {
+    archType = inputArch
   }
 
   let setupToolList: string[] = []
