@@ -244,3 +244,61 @@ jobs:
           file ${kubescore}
         fi
 
+  # ARM64 auto-detect test (no arch-type input)
+  test-arm-autodetect:
+    runs-on: ubuntu-22.04-arm64
+    steps:
+    - uses: actions/checkout@v5
+    - name: Show runner arch
+      run: |
+        echo "runner.os=${{ runner.os }}"
+        echo "runner.arch=${{ runner.arch }}"
+        uname -a
+        uname -m
+    - uses: ./
+      id: setup
+    - name: Verify tools execute on ARM64
+      run: |
+        kubectl version --client
+        kustomize version
+        helm version
+        kubeconform -v
+        conftest --version
+        yq --version
+        rancher --version
+        tilt version
+        skaffold version
+        kube-score version
+    - name: Verify binaries are ARM64
+      run: |
+        kubectl=${{steps.setup.outputs.kubectl-path}}
+        kustomize=${{steps.setup.outputs.kustomize-path}}
+        helm=${{steps.setup.outputs.helm-path}}
+        kubeval=${{steps.setup.outputs.kubeval-path}}
+        kubeconform=${{steps.setup.outputs.kubeconform-path}}
+        conftest=${{steps.setup.outputs.conftest-path}}
+        yq=${{steps.setup.outputs.yq-path}}
+        rancher=${{steps.setup.outputs.rancher-path}}
+        tilt=${{steps.setup.outputs.tilt-path}}
+        skaffold=${{steps.setup.outputs.skaffold-path}}
+        kubescore=${{steps.setup.outputs.kube-score-path}}
+
+        echo "Expecting aarch64 ARM64 binaries on ARM runner"
+
+        check_arch() {
+          if [ -n "$1" ]; then
+            file "$1" | tee /dev/stderr | grep -E "aarch64|ARM aarch64|ARM64" >/dev/null
+          fi
+        }
+
+        check_arch "${kubectl}"
+        check_arch "${kustomize}"
+        check_arch "${helm}"
+        # kubeval may be skipped on arm64 (no support)
+        check_arch "${kubeconform}"
+        check_arch "${conftest}"
+        check_arch "${yq}"
+        check_arch "${rancher}"
+        check_arch "${tilt}"
+        check_arch "${skaffold}"
+        check_arch "${kubescore}"
