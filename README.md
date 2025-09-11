@@ -10,7 +10,7 @@ A GitHub Action that setup Kubernetes tools (kubectl, kustomize, helm, kubeconfo
 |Parameter|Required|Default Value|Description|
 |:--:|:--:|:--:|:--|
 |`fail-fast`|`false`|`true`| the action immediately fails when it fails to download (ie. due to a bad version) |
-|`arch-type`|`false`|`amd64`| The processor architecture type of the tool binary to setup. Supported types are only `amd64` and `arm64`. If a type other than the supported Types is specified, it will be treated as `amd64`.|
+|`arch-type`|`false`|`auto (amd64\|arm64)`| Optional. The processor architecture type of the tool binary to setup is auto-detected (amd64 or arm64). Specify `arm64` only if you need to force arm64; any other value is treated as `amd64`.|
 |`setup-tools`|`false`|`""`|List of tool name to setup. By default, the action download and setup all supported Kubernetes tools. By specifying `setup-tools` you can choose which tools the action setup. Supported separator is `return` in multi-line string. Supported tools are `kubectl`, `kustomize`, `helm`, `helmv3`,  `kubeval`, `conftest`, `yq`, `rancher`, `tilt`, `skaffold`, `kube-score`|
 |`kubectl`|`false`|`1.24.10`| kubectl version. kubectl vesion can be found [here](https://github.com/kubernetes/kubernetes/releases)|
 |`kustomize`|`false`|`5.0.0`| kustomize version. kustomize vesion can be found [here](https://github.com/kubernetes-sigs/kustomize/releases)|
@@ -121,7 +121,7 @@ By specifying setup-tools you can choose which tools the action setup. Supported
         skaffold version
 ```
 
-By specifying arch-type you can choose the processor architecture type of the tool binary to setup. Supported types are only `amd64`(default) and `arm64`.
+Architecture is automatically detected on the runner (amd64 or arm64). You can optionally force arm64 by specifying `arch-type: 'arm64'`.
 
 ```yaml
   test: 
@@ -129,7 +129,8 @@ By specifying arch-type you can choose the processor architecture type of the to
     - uses: actions/checkout@v4
     - uses: yokawasa/action-setup-kube-tools@v0.11.2
       with:
-        arch-type: 'arm64'
+        # arch-type is optional; uncomment to force arm64
+        # arch-type: 'arm64'
         setup-tools: |
           kubectl
           helm

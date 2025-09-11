@@ -9,7 +9,7 @@ inputs:
   arch-type:
     required: false
     default: 'amd64'
-    description: 'The processor architecture type of the tool binary to setup. Supported types are only "amd64" and "arm64". If a type other than the supported Types is specified, it will be treated as "amd64"'
+    description: 'Optional. The processor architecture type of the tool binary to setup is auto-detected (amd64 or arm64). Specify "arm64" only if you need to force arm64; any other value is treated as amd64.'
   setup-tools:
     required: false
     default: ''

@@ -6710,6 +6710,15 @@ var __webpack_exports__ = {};
 
 
 const defaultProcessorArchType = 'amd64';
+// Determine the processor architecture type based on the current runtime.
+// Maps Node's os.arch() to the values used by download URLs: 'amd64' | 'arm64'
+function detectArchType() {
+    const nodeArch = os__WEBPACK_IMPORTED_MODULE_0__.arch().toLowerCase();
+    if (nodeArch === 'arm64' || nodeArch === 'aarch64') {
+        return 'arm64';
+    }
+    return 'amd64';
+}
 const defaultKubectlVersion = '1.24.10';
 const defaultKustomizeVersion = '5.0.0';
 const defaultHelmVersion = '3.11.1';
@@ -6904,8 +6913,11 @@ async function run() {
     if (_actions_core__WEBPACK_IMPORTED_MODULE_5__.getInput('fail-fast', { required: false }).toLowerCase() === 'false') {
         failFast = false;
     }
-    let archType = defaultProcessorArchType;
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_5__.getInput('arch-type', { required: false }).toLowerCase() === 'arm64') {
+    // Auto-detect architecture; allow explicit override to arm64 if provided.
+    // Note: We intentionally do not force 'amd64' from input to avoid masking auto-detection defaults.
+    let archType = detectArchType();
+    const inputArch = _actions_core__WEBPACK_IMPORTED_MODULE_5__.getInput('arch-type', { required: false }).toLowerCase();
+    if (inputArch === 'arm64') {
         archType = 'arm64';
     }
     let setupToolList = [];
