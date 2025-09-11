@@ -214,7 +214,7 @@ jobs:
 
         check_arch() {
           if [ -n "$1" ]; then
-            file "$1" | tee /dev/stderr | grep -E "aarch64|ARM aarch64|ARM64" >/dev/null
+            file "$1" | tee /dev/stderr | grep -E "aarch64|ARM" >/dev/null
           fi
         }
 
@@ -273,7 +273,7 @@ jobs:
 
         check_arch() {
           if [ -n "$1" ]; then
-            file "$1" | tee /dev/stderr | grep -E "aarch64|ARM aarch64|ARM64" >/dev/null
+            file "$1" | tee /dev/stderr | grep -E "aarch64|ARM" >/dev/null
           fi
         }
 
