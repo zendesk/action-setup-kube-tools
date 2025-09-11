@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
-    "outDir": "./lib",
+    "target": "es2022",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "outDir": "./dist",
     "rootDir": "./src",
     "strict": true,
     "noImplicitAny": true,
