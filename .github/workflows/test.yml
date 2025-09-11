@@ -188,8 +188,8 @@ jobs:
           ${kubescore} version
         fi
 
-  # ARM test
-  test4:
+  # ARM test (force ARM64 artifacts on x64 runner)
+  test-force-arm64:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -210,37 +210,81 @@ jobs:
         skaffold=${{steps.setup.outputs.skaffold-path}}
         kubescore=${{steps.setup.outputs.kube-score-path}}
 
-        if [ ! -z ${kubectl} ]; then
-          file ${kubectl}
-        fi
-        if [ ! -z ${kustomize} ]; then
-          file ${kustomize}
-        fi
-        if [ ! -z ${helm} ]; then
-          file ${helm}
-        fi
-        if [ ! -z ${kubeval} ]; then
-          file ${kubeval}
-        fi
-        if [ ! -z ${kubeconform} ]; then
-          file ${kubeconform}
-        fi
-        if [ ! -z ${conftest} ]; then
-          file ${conftest}
-        fi
-        if [ ! -z ${yq} ]; then
-          file ${yq}
-        fi
-        if [ ! -z ${rancher} ]; then
-          file ${rancher}
-        fi
-        if [ ! -z ${tilt} ]; then
-          file ${tilt}
-        fi
-        if [ ! -z ${skaffold} ]; then
-          file ${skaffold}
-        fi
-        if [ ! -z ${kubescore} ]; then
-          file ${kubescore}
-        fi
+        echo "Expecting aarch64 ARM64 binaries (forced)"
 
+        check_arch() {
+          if [ -n "$1" ]; then
+            file "$1" | tee /dev/stderr | grep -E "aarch64|ARM" >/dev/null
+          fi
+        }
+
+        check_arch "${kubectl}"
+        check_arch "${kustomize}"
+        check_arch "${helm}"
+        # kubeval may be empty on arm64 as unsupported
+        check_arch "${kubeconform}"
+        check_arch "${conftest}"
+        check_arch "${yq}"
+        check_arch "${rancher}"
+        check_arch "${tilt}"
+        check_arch "${skaffold}"
+        check_arch "${kubescore}"
+
+  # ARM64 auto-detect test (no arch-type input)
+  test-arm-autodetect:
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - uses: actions/checkout@v5
+    - name: Show runner arch
+      run: |
+        echo "runner.os=${{ runner.os }}"
+        echo "runner.arch=${{ runner.arch }}"
+        uname -a
+        uname -m
+    - uses: ./
+      id: setup
+    - name: Verify tools execute on ARM64
+      run: |
+        kubectl version --client
+        kustomize version
+        helm version
+        kubeconform -v
+        conftest --version
+        yq --version
+        rancher --version
+        tilt version
+        skaffold version
+        kube-score version
+    - name: Verify binaries are ARM64
+      run: |
+        kubectl=${{steps.setup.outputs.kubectl-path}}
+        kustomize=${{steps.setup.outputs.kustomize-path}}
+        helm=${{steps.setup.outputs.helm-path}}
+        kubeval=${{steps.setup.outputs.kubeval-path}}
+        kubeconform=${{steps.setup.outputs.kubeconform-path}}
+        conftest=${{steps.setup.outputs.conftest-path}}
+        yq=${{steps.setup.outputs.yq-path}}
+        rancher=${{steps.setup.outputs.rancher-path}}
+        tilt=${{steps.setup.outputs.tilt-path}}
+        skaffold=${{steps.setup.outputs.skaffold-path}}
+        kubescore=${{steps.setup.outputs.kube-score-path}}
+
+        echo "Expecting aarch64 ARM64 binaries on ARM runner"
+
+        check_arch() {
+          if [ -n "$1" ]; then
+            file "$1" | tee /dev/stderr | grep -E "aarch64|ARM" >/dev/null
+          fi
+        }
+
+        check_arch "${kubectl}"
+        check_arch "${kustomize}"
+        check_arch "${helm}"
+        # kubeval may be skipped on arm64 (no support)
+        check_arch "${kubeconform}"
+        check_arch "${conftest}"
+        check_arch "${yq}"
+        check_arch "${rancher}"
+        check_arch "${tilt}"
+        check_arch "${skaffold}"
+        check_arch "${kubescore}"

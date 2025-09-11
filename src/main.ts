@@ -8,6 +8,16 @@ import * as core from '@actions/core'
 
 const defaultProcessorArchType = 'amd64'
 
+// Determine the processor architecture type based on the current runtime.
+// Maps Node's os.arch() to the values used by download URLs: 'amd64' | 'arm64'
+function detectArchType(): string {
+  const nodeArch = os.arch().toLowerCase()
+  if (nodeArch === 'arm64' || nodeArch === 'aarch64') {
+    return 'arm64'
+  }
+  return 'amd64'
+}
+
 const defaultKubectlVersion = '1.24.10'
 const defaultKustomizeVersion = '5.0.0'
 const defaultHelmVersion = '3.11.1'
@@ -253,9 +263,11 @@ async function run() {
     failFast = false
   }
 
-  let archType = defaultProcessorArchType
-  if (core.getInput('arch-type', {required: false}).toLowerCase() === 'arm64') {
-    archType = 'arm64'
+  // Auto-detect architecture; allow explicit override to 'amd64' or 'arm64' if provided.
+  let archType = detectArchType()
+  const inputArch = core.getInput('arch-type', {required: false}).toLowerCase()
+  if (inputArch === 'arm64' || inputArch === 'amd64') {
+    archType = inputArch
   }
 
   let setupToolList: string[] = []
