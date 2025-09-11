@@ -51,7 +51,7 @@ Specific versions for the commands can be setup by adding inputs parameters like
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: yokawasa/action-setup-kube-tools@v0.11.2
+    - uses: yokawasa/action-setup-kube-tools@v0.12.0
       with:
         kubectl: '1.25'
         kustomize: '5.0.0'
@@ -82,7 +82,7 @@ Default versions for the commands will be setup if you don't give any inputs lik
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: yokawasa/action-setup-kube-tools@v0.11.2
+    - uses: yokawasa/action-setup-kube-tools@v0.12.0
     - run: |
         kubectl version --client
         kustomize version
@@ -103,7 +103,7 @@ By specifying setup-tools you can choose which tools the action setup. Supported
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: yokawasa/action-setup-kube-tools@v0.11.2
+    - uses: yokawasa/action-setup-kube-tools@v0.12.0
       with:
         setup-tools: |
           kubectl
@@ -127,7 +127,7 @@ Architecture is automatically detected on the runner (amd64 or arm64). You can o
   test: 
     steps:
     - uses: actions/checkout@v4
-    - uses: yokawasa/action-setup-kube-tools@v0.11.2
+    - uses: yokawasa/action-setup-kube-tools@v0.12.0
       with:
         # arch-type is optional; uncomment to force arm64
         # arch-type: 'arm64'
@@ -164,7 +164,7 @@ Finally push the results
 ```
 git add dist
 git commit -a -m "prod dependencies"
-git push origin releases/v0.11.2
+git push origin releases/v0.12.X
 ```
 
 ## References
