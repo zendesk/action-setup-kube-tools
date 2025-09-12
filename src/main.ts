@@ -72,10 +72,28 @@ async function httpGet(url: string): Promise<string> {
           res.statusCode < 400 &&
           res.headers.location
         ) {
-          // Follow one level of redirect (sufficient for GitHub latest redirects)
-          httpGet(res.headers.location)
-            .then(resolve)
-            .catch(reject)
+          // Validate redirect location domain to avoid SSRF attack before following it.
+          // Need to add domain names to allow as needed in the future 
+          try {
+            const allowedDomains = [
+              'github.com',
+              'api.github.com',
+              'raw.githubusercontent.com',
+              'dl.k8s.io',
+              'get.helm.sh',
+              'storage.googleapis.com'
+            ]
+            const redirectUrl = new URL(res.headers.location, url)
+            if (!allowedDomains.includes(redirectUrl.hostname)) {
+              reject(new Error(`Redirect to disallowed domain: ${redirectUrl.hostname}`))
+              return
+            }
+            httpGet(redirectUrl.toString())
+              .then(resolve)
+              .catch(reject)
+          } catch (e) {
+            reject(new Error(`Invalid redirect URL: ${res.headers.location}`))
+          }
           return
         }
         if (res.statusCode < 200 || res.statusCode >= 300) {
@@ -326,11 +344,7 @@ async function run() {
             console.log(`Exiting immediately (fail fast) - [Reason] ${e}`)
             process.exit(1)
           } else {
-            // eslint-disable-next-line no-console
-            console.log(
-              `Failed to resolve latest for ${tool.name}. Falling back to default ${tool.defaultVersion}`
-            )
-            toolVersion = tool.defaultVersion
+            throw new Error(`Cannot resolve a version for ${tool.name}.`)
           }
         }
       }
