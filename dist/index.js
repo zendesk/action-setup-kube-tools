@@ -6722,17 +6722,83 @@ function detectArchType() {
     return 'amd64';
 }
 const Tools = [
-    { name: 'kubectl', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'kubectl' },
-    { name: 'kustomize', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'kustomize' },
-    { name: 'helm', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'linux-{arch}/helm' },
-    { name: 'kubeval', defaultVersion: 'latest', isArchived: true, supportArm: false, commandPathInPackage: 'kubeval' },
-    { name: 'kubeconform', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'kubeconform' },
-    { name: 'conftest', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'conftest' },
-    { name: 'yq', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'yq_linux_{arch}' },
-    { name: 'rancher', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'rancher-v{ver}/rancher' },
-    { name: 'tilt', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'tilt' },
-    { name: 'skaffold', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'skaffold-linux-{arch}' },
-    { name: 'kube-score', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'kube-score' }
+    {
+        name: 'kubectl',
+        defaultVersion: 'latest',
+        isArchived: false,
+        supportArm: true,
+        commandPathInPackage: 'kubectl'
+    },
+    {
+        name: 'kustomize',
+        defaultVersion: 'latest',
+        isArchived: true,
+        supportArm: true,
+        commandPathInPackage: 'kustomize'
+    },
+    {
+        name: 'helm',
+        defaultVersion: 'latest',
+        isArchived: true,
+        supportArm: true,
+        commandPathInPackage: 'linux-{arch}/helm'
+    },
+    {
+        name: 'kubeval',
+        defaultVersion: 'latest',
+        isArchived: true,
+        supportArm: false,
+        commandPathInPackage: 'kubeval'
+    },
+    {
+        name: 'kubeconform',
+        defaultVersion: 'latest',
+        isArchived: true,
+        supportArm: true,
+        commandPathInPackage: 'kubeconform'
+    },
+    {
+        name: 'conftest',
+        defaultVersion: 'latest',
+        isArchived: true,
+        supportArm: true,
+        commandPathInPackage: 'conftest'
+    },
+    {
+        name: 'yq',
+        defaultVersion: 'latest',
+        isArchived: false,
+        supportArm: true,
+        commandPathInPackage: 'yq_linux_{arch}'
+    },
+    {
+        name: 'rancher',
+        defaultVersion: 'latest',
+        isArchived: true,
+        supportArm: true,
+        commandPathInPackage: 'rancher-v{ver}/rancher'
+    },
+    {
+        name: 'tilt',
+        defaultVersion: 'latest',
+        isArchived: true,
+        supportArm: true,
+        commandPathInPackage: 'tilt'
+    },
+    {
+        name: 'skaffold',
+        defaultVersion: 'latest',
+        isArchived: false,
+        supportArm: true,
+        commandPathInPackage: 'skaffold-linux-{arch}'
+    },
+    {
+        name: 'kube-score',
+        defaultVersion: 'latest',
+        isArchived: false,
+        supportArm: true,
+        commandPathInPackage: 'kube-score'
+    }
 ];
 // Replace all {ver} and {arch} placeholders in the source format string with the actual values
 function replacePlaceholders(format, version, archType) {
@@ -6757,13 +6823,14 @@ async function httpGet(url) {
                 res.statusCode < 400 &&
                 res.headers.location) {
                 // Validate redirect location domain to avoid SSRF attack before following it.
-                // Need to add domain names to allow as needed in the future 
+                // Need to add domain names to allow as needed in the future
                 try {
                     const allowedDomains = [
                         'github.com',
                         'api.github.com',
                         'raw.githubusercontent.com',
                         'dl.k8s.io',
+                        'cdn.dl.k8s.io',
                         'get.helm.sh',
                         'storage.googleapis.com'
                     ];
@@ -6835,7 +6902,9 @@ async function getLatestVersion(toolName) {
         }
         catch (e) {
             // Truncate the response for safety if it's too long: #75
-            const truncatedJson = json && json.length > 500 ? json.substring(0, 500) + '...[truncated]' : json;
+            const truncatedJson = json && json.length > 500
+                ? json.substring(0, 500) + '...[truncated]'
+                : json;
             throw new Error(`Failed to parse JSON response from ${api} for ${toolName}: ${e}. Response: ${truncatedJson}`);
         }
         if (!meta || !meta.tag_name) {

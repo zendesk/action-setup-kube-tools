@@ -146,6 +146,7 @@ async function httpGet(url: string): Promise<string> {
               'api.github.com',
               'raw.githubusercontent.com',
               'dl.k8s.io',
+              'cdn.dl.k8s.io',
               'get.helm.sh',
               'storage.googleapis.com'
             ]
