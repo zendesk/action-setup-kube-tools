@@ -339,6 +339,12 @@ async function run() {
           const resolved = await getLatestVersion(tool.name)
           // eslint-disable-next-line no-console
           console.log(`Resolved latest for ${tool.name}: ${resolved}`)
+          //debugging ///////////////////////
+          let archType = detectArchType()
+          console.log(`Detected archType: ${archType}`)
+          const inputArch = core.getInput('arch-type', {required: false}).toLowerCase()
+          console.log(`input archType: ${inputArch}`)
+          ////////////////////////
           toolVersion = resolved
         } catch (e) {
           if (failFast) {
