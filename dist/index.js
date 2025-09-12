@@ -6721,95 +6721,18 @@ function detectArchType() {
     }
     return 'amd64';
 }
-const defaultKubectlVersion = '1.24.10';
-const defaultKustomizeVersion = '5.0.0';
-const defaultHelmVersion = '3.11.1';
-const defaultKubevalVersion = '0.16.1';
-const defaultKubeconformVersion = '0.5.0';
-const defaultConftestVersion = '0.39.0';
-const defaultYqVersion = '4.30.7';
-const defaultRancherVersion = '2.7.0';
-const defaultTiltVersion = '0.31.2';
-const defaultSkaffoldVersion = '2.1.0';
-const defaultKubeScoreVersion = '1.16.1';
 const Tools = [
-    {
-        name: 'kubectl',
-        defaultVersion: defaultKubectlVersion,
-        isArchived: false,
-        supportArm: true,
-        commandPathInPackage: 'kubectl'
-    },
-    {
-        name: 'kustomize',
-        defaultVersion: defaultKustomizeVersion,
-        isArchived: true,
-        supportArm: true,
-        commandPathInPackage: 'kustomize'
-    },
-    {
-        name: 'helm',
-        defaultVersion: defaultHelmVersion,
-        isArchived: true,
-        supportArm: true,
-        commandPathInPackage: 'linux-{arch}/helm'
-    },
-    {
-        name: 'kubeval',
-        defaultVersion: defaultKubevalVersion,
-        isArchived: true,
-        supportArm: false,
-        commandPathInPackage: 'kubeval'
-    },
-    {
-        name: 'kubeconform',
-        defaultVersion: defaultKubeconformVersion,
-        isArchived: true,
-        supportArm: true,
-        commandPathInPackage: 'kubeconform'
-    },
-    {
-        name: 'conftest',
-        defaultVersion: defaultConftestVersion,
-        isArchived: true,
-        supportArm: true,
-        commandPathInPackage: 'conftest'
-    },
-    {
-        name: 'yq',
-        defaultVersion: defaultYqVersion,
-        isArchived: false,
-        supportArm: true,
-        commandPathInPackage: 'yq_linux_{arch}'
-    },
-    {
-        name: 'rancher',
-        defaultVersion: defaultRancherVersion,
-        isArchived: true,
-        supportArm: true,
-        commandPathInPackage: 'rancher-v{ver}/rancher'
-    },
-    {
-        name: 'tilt',
-        defaultVersion: defaultTiltVersion,
-        isArchived: true,
-        supportArm: true,
-        commandPathInPackage: 'tilt'
-    },
-    {
-        name: 'skaffold',
-        defaultVersion: defaultSkaffoldVersion,
-        isArchived: false,
-        supportArm: true,
-        commandPathInPackage: 'skaffold-linux-{arch}'
-    },
-    {
-        name: 'kube-score',
-        defaultVersion: defaultKubeScoreVersion,
-        isArchived: false,
-        supportArm: true,
-        commandPathInPackage: 'kube-score'
-    }
+    { name: 'kubectl', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'kubectl' },
+    { name: 'kustomize', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'kustomize' },
+    { name: 'helm', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'linux-{arch}/helm' },
+    { name: 'kubeval', defaultVersion: 'latest', isArchived: true, supportArm: false, commandPathInPackage: 'kubeval' },
+    { name: 'kubeconform', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'kubeconform' },
+    { name: 'conftest', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'conftest' },
+    { name: 'yq', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'yq_linux_{arch}' },
+    { name: 'rancher', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'rancher-v{ver}/rancher' },
+    { name: 'tilt', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'tilt' },
+    { name: 'skaffold', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'skaffold-linux-{arch}' },
+    { name: 'kube-score', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'kube-score' }
 ];
 // Replace all {ver} and {arch} placeholders in the source format string with the actual values
 function replacePlaceholders(format, version, archType) {
@@ -6819,7 +6742,7 @@ function replacePlaceholders(format, version, archType) {
 }
 // Perform a simple HTTPS GET and return the response body as string
 async function httpGet(url) {
-    return await new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
         const req = https__WEBPACK_IMPORTED_MODULE_4__.get(url, {
             headers: {
                 'User-Agent': 'yokawasa/action-setup-kube-tools',
@@ -6833,10 +6756,29 @@ async function httpGet(url) {
             if (res.statusCode >= 300 &&
                 res.statusCode < 400 &&
                 res.headers.location) {
-                // Follow one level of redirect (sufficient for GitHub latest redirects)
-                httpGet(res.headers.location)
-                    .then(resolve)
-                    .catch(reject);
+                // Validate redirect location domain to avoid SSRF attack before following it.
+                // Need to add domain names to allow as needed in the future 
+                try {
+                    const allowedDomains = [
+                        'github.com',
+                        'api.github.com',
+                        'raw.githubusercontent.com',
+                        'dl.k8s.io',
+                        'get.helm.sh',
+                        'storage.googleapis.com'
+                    ];
+                    const redirectUrl = new URL(res.headers.location, url);
+                    if (!allowedDomains.includes(redirectUrl.hostname)) {
+                        reject(new Error(`Redirect to disallowed domain: ${redirectUrl.hostname}`));
+                        return;
+                    }
+                    httpGet(redirectUrl.toString())
+                        .then(resolve)
+                        .catch(reject);
+                }
+                catch (e) {
+                    reject(new Error(`Invalid redirect URL: ${res.headers.location}`));
+                }
                 return;
             }
             if (res.statusCode < 200 || res.statusCode >= 300) {
@@ -6887,7 +6829,15 @@ async function getLatestVersion(toolName) {
         }
         const api = `https://api.github.com/repos/${repo}/releases/latest`;
         const json = await httpGet(api);
-        const meta = JSON.parse(json);
+        let meta;
+        try {
+            meta = JSON.parse(json);
+        }
+        catch (e) {
+            // Truncate the response for safety if it's too long: #75
+            const truncatedJson = json && json.length > 500 ? json.substring(0, 500) + '...[truncated]' : json;
+            throw new Error(`Failed to parse JSON response from ${api} for ${toolName}: ${e}. Response: ${truncatedJson}`);
+        }
         if (!meta || !meta.tag_name) {
             throw new Error(`Unexpected response resolving latest for ${toolName}`);
         }
@@ -6997,7 +6947,9 @@ async function run() {
     }
     // Auto-detect architecture; allow explicit override to 'amd64' or 'arm64' if provided.
     let archType = detectArchType();
+    console.log(`Detected archType: ${archType}`);
     const inputArch = _actions_core__WEBPACK_IMPORTED_MODULE_6__.getInput('arch-type', { required: false }).toLowerCase();
+    console.log(`input archType: ${inputArch}`);
     if (inputArch === 'arm64' || inputArch === 'amd64') {
         archType = inputArch;
     }
@@ -7039,9 +6991,7 @@ async function run() {
                         process.exit(1);
                     }
                     else {
-                        // eslint-disable-next-line no-console
-                        console.log(`Failed to resolve latest for ${tool.name}. Falling back to default ${tool.defaultVersion}`);
-                        toolVersion = tool.defaultVersion;
+                        throw new Error(`Cannot resolve a version for ${tool.name}.`);
                     }
                 }
             }

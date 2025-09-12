@@ -27,17 +27,83 @@ interface Tool {
 }
 
 const Tools: Tool[] = [
-  { name: 'kubectl', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'kubectl' },
-  { name: 'kustomize', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'kustomize' },
-  { name: 'helm', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'linux-{arch}/helm' },
-  { name: 'kubeval', defaultVersion: 'latest', isArchived: true, supportArm: false, commandPathInPackage: 'kubeval' },
-  { name: 'kubeconform', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'kubeconform' },
-  { name: 'conftest', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'conftest' },
-  { name: 'yq', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'yq_linux_{arch}' },
-  { name: 'rancher', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'rancher-v{ver}/rancher' },
-  { name: 'tilt', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'tilt' },
-  { name: 'skaffold', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'skaffold-linux-{arch}' },
-  { name: 'kube-score', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'kube-score' }
+  {
+    name: 'kubectl',
+    defaultVersion: 'latest',
+    isArchived: false,
+    supportArm: true,
+    commandPathInPackage: 'kubectl'
+  },
+  {
+    name: 'kustomize',
+    defaultVersion: 'latest',
+    isArchived: true,
+    supportArm: true,
+    commandPathInPackage: 'kustomize'
+  },
+  {
+    name: 'helm',
+    defaultVersion: 'latest',
+    isArchived: true,
+    supportArm: true,
+    commandPathInPackage: 'linux-{arch}/helm'
+  },
+  {
+    name: 'kubeval',
+    defaultVersion: 'latest',
+    isArchived: true,
+    supportArm: false,
+    commandPathInPackage: 'kubeval'
+  },
+  {
+    name: 'kubeconform',
+    defaultVersion: 'latest',
+    isArchived: true,
+    supportArm: true,
+    commandPathInPackage: 'kubeconform'
+  },
+  {
+    name: 'conftest',
+    defaultVersion: 'latest',
+    isArchived: true,
+    supportArm: true,
+    commandPathInPackage: 'conftest'
+  },
+  {
+    name: 'yq',
+    defaultVersion: 'latest',
+    isArchived: false,
+    supportArm: true,
+    commandPathInPackage: 'yq_linux_{arch}'
+  },
+  {
+    name: 'rancher',
+    defaultVersion: 'latest',
+    isArchived: true,
+    supportArm: true,
+    commandPathInPackage: 'rancher-v{ver}/rancher'
+  },
+  {
+    name: 'tilt',
+    defaultVersion: 'latest',
+    isArchived: true,
+    supportArm: true,
+    commandPathInPackage: 'tilt'
+  },
+  {
+    name: 'skaffold',
+    defaultVersion: 'latest',
+    isArchived: false,
+    supportArm: true,
+    commandPathInPackage: 'skaffold-linux-{arch}'
+  },
+  {
+    name: 'kube-score',
+    defaultVersion: 'latest',
+    isArchived: false,
+    supportArm: true,
+    commandPathInPackage: 'kube-score'
+  }
 ]
 
 // Replace all {ver} and {arch} placeholders in the source format string with the actual values
@@ -73,7 +139,7 @@ async function httpGet(url: string): Promise<string> {
           res.headers.location
         ) {
           // Validate redirect location domain to avoid SSRF attack before following it.
-          // Need to add domain names to allow as needed in the future 
+          // Need to add domain names to allow as needed in the future
           try {
             const allowedDomains = [
               'github.com',
@@ -85,7 +151,11 @@ async function httpGet(url: string): Promise<string> {
             ]
             const redirectUrl = new URL(res.headers.location, url)
             if (!allowedDomains.includes(redirectUrl.hostname)) {
-              reject(new Error(`Redirect to disallowed domain: ${redirectUrl.hostname}`))
+              reject(
+                new Error(
+                  `Redirect to disallowed domain: ${redirectUrl.hostname}`
+                )
+              )
               return
             }
             httpGet(redirectUrl.toString())
@@ -148,13 +218,18 @@ async function getLatestVersion(toolName: string): Promise<string> {
     }
     const api = `https://api.github.com/repos/${repo}/releases/latest`
     const json = await httpGet(api)
-    let meta;
+    let meta
     try {
       meta = JSON.parse(json)
     } catch (e) {
       // Truncate the response for safety if it's too long: #75
-      const truncatedJson = json && json.length > 500 ? json.substring(0, 500) + '...[truncated]' : json;
-      throw new Error(`Failed to parse JSON response from ${api} for ${toolName}: ${e}. Response: ${truncatedJson}`)
+      const truncatedJson =
+        json && json.length > 500
+          ? json.substring(0, 500) + '...[truncated]'
+          : json
+      throw new Error(
+        `Failed to parse JSON response from ${api} for ${toolName}: ${e}. Response: ${truncatedJson}`
+      )
     }
     if (!meta || !meta.tag_name) {
       throw new Error(`Unexpected response resolving latest for ${toolName}`)
