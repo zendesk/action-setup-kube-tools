@@ -138,33 +138,39 @@ async function httpGet(url: string): Promise<string> {
           res.statusCode < 400 &&
           res.headers.location
         ) {
+          //// SSRF attach protection (Disabled for now to avoid many allowed domain changes)
           // Validate redirect location domain to avoid SSRF attack before following it.
           // Need to add domain names to allow as needed in the future
-          try {
-            const allowedDomains = [
-              'github.com',
-              'api.github.com',
-              'raw.githubusercontent.com',
-              'dl.k8s.io',
-              'cdn.dl.k8s.io',
-              'get.helm.sh',
-              'storage.googleapis.com'
-            ]
-            const redirectUrl = new URL(res.headers.location, url)
-            if (!allowedDomains.includes(redirectUrl.hostname)) {
-              reject(
-                new Error(
-                  `Redirect to disallowed domain: ${redirectUrl.hostname}`
-                )
-              )
-              return
-            }
-            httpGet(redirectUrl.toString())
-              .then(resolve)
-              .catch(reject)
-          } catch (e) {
-            reject(new Error(`Invalid redirect URL: ${res.headers.location}`))
-          }
+          // try {
+          //   const allowedDomains = [
+          //     'github.com',
+          //     'api.github.com',
+          //     'raw.githubusercontent.com',
+          //     'dl.k8s.io',
+          //     'cdn.dl.k8s.io',
+          //     'get.helm.sh',
+          //     'storage.googleapis.com'
+          //   ]
+          //   const redirectUrl = new URL(res.headers.location, url)
+          //   if (!allowedDomains.includes(redirectUrl.hostname)) {
+          //     reject(
+          //       new Error(
+          //         `Redirect to disallowed domain: ${redirectUrl.hostname}`
+          //       )
+          //     )
+          //     return
+          //   }
+          //   httpGet(redirectUrl.toString())
+          //     .then(resolve)
+          //     .catch(reject)
+          // } catch (e) {
+          //   reject(new Error(`Invalid redirect URL: ${res.headers.location}`))
+          // }
+
+          //// Follow the redirect
+          httpGet(res.headers.location)
+            .then(resolve)
+            .catch(reject)
           return
         }
         if (res.statusCode < 200 || res.statusCode >= 300) {
