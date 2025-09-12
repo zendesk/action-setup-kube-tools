@@ -18,19 +18,6 @@ function detectArchType(): string {
   }
   return 'amd64'
 }
-
-const defaultKubectlVersion = '1.24.10'
-const defaultKustomizeVersion = '5.0.0'
-const defaultHelmVersion = '3.11.1'
-const defaultKubevalVersion = '0.16.1'
-const defaultKubeconformVersion = '0.5.0'
-const defaultConftestVersion = '0.39.0'
-const defaultYqVersion = '4.30.7'
-const defaultRancherVersion = '2.7.0'
-const defaultTiltVersion = '0.31.2'
-const defaultSkaffoldVersion = '2.1.0'
-const defaultKubeScoreVersion = '1.16.1'
-
 interface Tool {
   name: string
   defaultVersion: string
@@ -40,83 +27,17 @@ interface Tool {
 }
 
 const Tools: Tool[] = [
-  {
-    name: 'kubectl',
-    defaultVersion: defaultKubectlVersion,
-    isArchived: false,
-    supportArm: true,
-    commandPathInPackage: 'kubectl'
-  },
-  {
-    name: 'kustomize',
-    defaultVersion: defaultKustomizeVersion,
-    isArchived: true,
-    supportArm: true,
-    commandPathInPackage: 'kustomize'
-  },
-  {
-    name: 'helm',
-    defaultVersion: defaultHelmVersion,
-    isArchived: true,
-    supportArm: true,
-    commandPathInPackage: 'linux-{arch}/helm'
-  },
-  {
-    name: 'kubeval',
-    defaultVersion: defaultKubevalVersion,
-    isArchived: true,
-    supportArm: false,
-    commandPathInPackage: 'kubeval'
-  },
-  {
-    name: 'kubeconform',
-    defaultVersion: defaultKubeconformVersion,
-    isArchived: true,
-    supportArm: true,
-    commandPathInPackage: 'kubeconform'
-  },
-  {
-    name: 'conftest',
-    defaultVersion: defaultConftestVersion,
-    isArchived: true,
-    supportArm: true,
-    commandPathInPackage: 'conftest'
-  },
-  {
-    name: 'yq',
-    defaultVersion: defaultYqVersion,
-    isArchived: false,
-    supportArm: true,
-    commandPathInPackage: 'yq_linux_{arch}'
-  },
-  {
-    name: 'rancher',
-    defaultVersion: defaultRancherVersion,
-    isArchived: true,
-    supportArm: true,
-    commandPathInPackage: 'rancher-v{ver}/rancher'
-  },
-  {
-    name: 'tilt',
-    defaultVersion: defaultTiltVersion,
-    isArchived: true,
-    supportArm: true,
-    commandPathInPackage: 'tilt'
-  },
-  {
-    name: 'skaffold',
-    defaultVersion: defaultSkaffoldVersion,
-    isArchived: false,
-    supportArm: true,
-    commandPathInPackage: 'skaffold-linux-{arch}'
-  },
-  {
-    name: 'kube-score',
-    defaultVersion: defaultKubeScoreVersion,
-    isArchived: false,
-    supportArm: true,
-    commandPathInPackage: 'kube-score'
-  }
+  { name: 'kubectl', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'kubectl' },
+  { name: 'kustomize', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'kustomize' },
+  { name: 'helm', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'linux-{arch}/helm' },
+  { name: 'kubeval', defaultVersion: 'latest', isArchived: true, supportArm: false, commandPathInPackage: 'kubeval' },
+  { name: 'kubeconform', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'kubeconform' },
+  { name: 'conftest', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'conftest' },
+  { name: 'yq', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'yq_linux_{arch}' },
+  { name: 'rancher', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'rancher-v{ver}/rancher' },
+  { name: 'tilt', defaultVersion: 'latest', isArchived: true, supportArm: true, commandPathInPackage: 'tilt' },
+  { name: 'skaffold', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'skaffold-linux-{arch}' },
+  { name: 'kube-score', defaultVersion: 'latest', isArchived: false, supportArm: true, commandPathInPackage: 'kube-score' }
 ]
 
 // Replace all {ver} and {arch} placeholders in the source format string with the actual values
