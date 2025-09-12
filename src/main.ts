@@ -130,7 +130,14 @@ async function getLatestVersion(toolName: string): Promise<string> {
     }
     const api = `https://api.github.com/repos/${repo}/releases/latest`
     const json = await httpGet(api)
-    const meta = JSON.parse(json)
+    let meta;
+    try {
+      meta = JSON.parse(json)
+    } catch (e) {
+      // Truncate the response for safety if it's too long
+      const truncatedJson = json && json.length > 500 ? json.substring(0, 500) + '...[truncated]' : json;
+      throw new Error(`Failed to parse JSON response from ${api} for ${toolName}: ${e}. Response: ${truncatedJson}`)
+    }
     if (!meta || !meta.tag_name) {
       throw new Error(`Unexpected response resolving latest for ${toolName}`)
     }
