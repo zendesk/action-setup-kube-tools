@@ -2,6 +2,7 @@ import * as os from 'os'
 import * as path from 'path'
 import * as util from 'util'
 import * as fs from 'fs'
+import * as https from 'https'
 
 import * as toolCache from '@actions/tool-cache'
 import * as core from '@actions/core'
@@ -17,19 +18,6 @@ function detectArchType(): string {
   }
   return 'amd64'
 }
-
-const defaultKubectlVersion = '1.24.10'
-const defaultKustomizeVersion = '5.0.0'
-const defaultHelmVersion = '3.11.1'
-const defaultKubevalVersion = '0.16.1'
-const defaultKubeconformVersion = '0.5.0'
-const defaultConftestVersion = '0.39.0'
-const defaultYqVersion = '4.30.7'
-const defaultRancherVersion = '2.7.0'
-const defaultTiltVersion = '0.31.2'
-const defaultSkaffoldVersion = '2.1.0'
-const defaultKubeScoreVersion = '1.16.1'
-
 interface Tool {
   name: string
   defaultVersion: string
@@ -41,77 +29,77 @@ interface Tool {
 const Tools: Tool[] = [
   {
     name: 'kubectl',
-    defaultVersion: defaultKubectlVersion,
+    defaultVersion: 'latest',
     isArchived: false,
     supportArm: true,
     commandPathInPackage: 'kubectl'
   },
   {
     name: 'kustomize',
-    defaultVersion: defaultKustomizeVersion,
+    defaultVersion: 'latest',
     isArchived: true,
     supportArm: true,
     commandPathInPackage: 'kustomize'
   },
   {
     name: 'helm',
-    defaultVersion: defaultHelmVersion,
+    defaultVersion: 'latest',
     isArchived: true,
     supportArm: true,
     commandPathInPackage: 'linux-{arch}/helm'
   },
   {
     name: 'kubeval',
-    defaultVersion: defaultKubevalVersion,
+    defaultVersion: 'latest',
     isArchived: true,
     supportArm: false,
     commandPathInPackage: 'kubeval'
   },
   {
     name: 'kubeconform',
-    defaultVersion: defaultKubeconformVersion,
+    defaultVersion: 'latest',
     isArchived: true,
     supportArm: true,
     commandPathInPackage: 'kubeconform'
   },
   {
     name: 'conftest',
-    defaultVersion: defaultConftestVersion,
+    defaultVersion: 'latest',
     isArchived: true,
     supportArm: true,
     commandPathInPackage: 'conftest'
   },
   {
     name: 'yq',
-    defaultVersion: defaultYqVersion,
+    defaultVersion: 'latest',
     isArchived: false,
     supportArm: true,
     commandPathInPackage: 'yq_linux_{arch}'
   },
   {
     name: 'rancher',
-    defaultVersion: defaultRancherVersion,
+    defaultVersion: 'latest',
     isArchived: true,
     supportArm: true,
     commandPathInPackage: 'rancher-v{ver}/rancher'
   },
   {
     name: 'tilt',
-    defaultVersion: defaultTiltVersion,
+    defaultVersion: 'latest',
     isArchived: true,
     supportArm: true,
     commandPathInPackage: 'tilt'
   },
   {
     name: 'skaffold',
-    defaultVersion: defaultSkaffoldVersion,
+    defaultVersion: 'latest',
     isArchived: false,
     supportArm: true,
     commandPathInPackage: 'skaffold-linux-{arch}'
   },
   {
     name: 'kube-score',
-    defaultVersion: defaultKubeScoreVersion,
+    defaultVersion: 'latest',
     isArchived: false,
     supportArm: true,
     commandPathInPackage: 'kube-score'
@@ -127,6 +115,136 @@ function replacePlaceholders(
   return format.replace(/{ver}|{arch}/g, match => {
     return match === '{ver}' ? version : archType
   })
+}
+
+// Perform a simple HTTPS GET and return the response body as string
+async function httpGet(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const req = https.get(
+      url,
+      {
+        headers: {
+          'User-Agent': 'yokawasa/action-setup-kube-tools',
+          Accept: 'application/vnd.github+json'
+        }
+      },
+      res => {
+        if (!res.statusCode) {
+          reject(new Error(`Request failed: ${url}`))
+          return
+        }
+        if (
+          res.statusCode >= 300 &&
+          res.statusCode < 400 &&
+          res.headers.location
+        ) {
+          //// SSRF attach protection (Disabled for now to avoid many allowed domain changes)
+          // Validate redirect location domain to avoid SSRF attack before following it.
+          // Need to add domain names to allow as needed in the future
+          // try {
+          //   const allowedDomains = [
+          //     'github.com',
+          //     'api.github.com',
+          //     'raw.githubusercontent.com',
+          //     'dl.k8s.io',
+          //     'cdn.dl.k8s.io',
+          //     'get.helm.sh',
+          //     'storage.googleapis.com'
+          //   ]
+          //   const redirectUrl = new URL(res.headers.location, url)
+          //   if (!allowedDomains.includes(redirectUrl.hostname)) {
+          //     reject(
+          //       new Error(
+          //         `Redirect to disallowed domain: ${redirectUrl.hostname}`
+          //       )
+          //     )
+          //     return
+          //   }
+          //   httpGet(redirectUrl.toString())
+          //     .then(resolve)
+          //     .catch(reject)
+          // } catch (e) {
+          //   reject(new Error(`Invalid redirect URL: ${res.headers.location}`))
+          // }
+
+          //// Follow the redirect
+          httpGet(res.headers.location)
+            .then(resolve)
+            .catch(reject)
+          return
+        }
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          reject(new Error(`Request failed: ${url} (status ${res.statusCode})`))
+          return
+        }
+        let data = ''
+        res.on('data', chunk => (data += chunk))
+        res.on('end', () => resolve(data))
+      }
+    )
+    req.on('error', reject)
+  })
+}
+
+// Normalize tag to a bare version (strip prefixes like 'v' or 'kustomize/v')
+function normalizeTagToVersion(tag: string, toolName: string): string {
+  let t = tag.trim()
+  if (toolName === 'kustomize') {
+    if (t.startsWith('kustomize/')) {
+      t = t.substring('kustomize/'.length)
+    }
+  }
+  if (t.startsWith('v') || t.startsWith('V')) {
+    t = t.substring(1)
+  }
+  return t
+}
+
+async function getLatestVersion(toolName: string): Promise<string> {
+  try {
+    if (toolName === 'kubectl') {
+      const body = await httpGet('https://dl.k8s.io/release/stable.txt')
+      return normalizeTagToVersion(body, toolName)
+    }
+
+    const repoMap: {[key: string]: string} = {
+      kustomize: 'kubernetes-sigs/kustomize',
+      helm: 'helm/helm',
+      kubeval: 'instrumenta/kubeval',
+      kubeconform: 'yannh/kubeconform',
+      conftest: 'open-policy-agent/conftest',
+      yq: 'mikefarah/yq',
+      rancher: 'rancher/cli',
+      tilt: 'tilt-dev/tilt',
+      skaffold: 'GoogleContainerTools/skaffold',
+      'kube-score': 'zegl/kube-score'
+    }
+    const repo = repoMap[toolName]
+    if (!repo) {
+      throw new Error(`Unsupported tool for latest lookup: ${toolName}`)
+    }
+    const api = `https://api.github.com/repos/${repo}/releases/latest`
+    const json = await httpGet(api)
+    let meta
+    try {
+      meta = JSON.parse(json)
+    } catch (e) {
+      // Truncate the response for safety if it's too long: #75
+      const truncatedJson =
+        json && json.length > 500
+          ? json.substring(0, 500) + '...[truncated]'
+          : json
+      throw new Error(
+        `Failed to parse JSON response from ${api} for ${toolName}: ${e}. Response: ${truncatedJson}`
+      )
+    }
+    if (!meta || !meta.tag_name) {
+      throw new Error(`Unexpected response resolving latest for ${toolName}`)
+    }
+    return normalizeTagToVersion(String(meta.tag_name), toolName)
+  } catch (e) {
+    throw new Error(`Failed to resolve latest version for ${toolName}: ${e}`)
+  }
 }
 
 function getDownloadURL(
@@ -265,7 +383,9 @@ async function run() {
 
   // Auto-detect architecture; allow explicit override to 'amd64' or 'arm64' if provided.
   let archType = detectArchType()
+  console.log(`Detected archType: ${archType}`)
   const inputArch = core.getInput('arch-type', {required: false}).toLowerCase()
+  console.log(`input archType: ${inputArch}`)
   if (inputArch === 'arm64' || inputArch === 'amd64') {
     archType = inputArch
   }
@@ -295,6 +415,22 @@ async function run() {
       }
       if (!toolVersion) {
         toolVersion = tool.defaultVersion
+      }
+      if (toolVersion === 'latest') {
+        try {
+          const resolved = await getLatestVersion(tool.name)
+          // eslint-disable-next-line no-console
+          console.log(`Resolved latest for ${tool.name}: ${resolved}`)
+          toolVersion = resolved
+        } catch (e) {
+          if (failFast) {
+            // eslint-disable-next-line no-console
+            console.log(`Exiting immediately (fail fast) - [Reason] ${e}`)
+            process.exit(1)
+          } else {
+            throw new Error(`Cannot resolve a version for ${tool.name}.`)
+          }
+        }
       }
       if (archType === 'arm64' && !tool.supportArm) {
         // eslint-disable-next-line no-console

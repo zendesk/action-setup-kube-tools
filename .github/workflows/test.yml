@@ -21,7 +21,7 @@ jobs:
     - run: |
         npm install
         npm run all
-  test1:
+  test-all-tools-no-input:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -64,7 +64,7 @@ jobs:
         ${skaffold} version
         ${kubescore} version
 
-  test2:
+  test-all-tools-with-versrion-input:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -119,7 +119,7 @@ jobs:
         ${skaffold} version
         ${kubescore} version
 
-  test3:
+  test-with-some-tools-selected-and-latest:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v5
@@ -131,10 +131,10 @@ jobs:
           helm
           kustomize
           skaffold
-        kubectl: '1.17.1'
-        helm: '3.2.4'
-        kustomize: '3.7.0'
-        skaffold: '1.20.0'
+        kubectl: latest
+        helm: latest
+        kustomize: latest
+        skaffold: latest
       id: setup
     - run: |
         kubectl version --client
