@@ -12,21 +12,23 @@ A GitHub Action that setup Kubernetes tools (kubectl, kustomize, helm, kubeconfo
 |`fail-fast`|`false`|`true`| the action immediately fails when it fails to download (ie. due to a bad version) |
 |`arch-type`|`false`|`amd64`| Optional. The processor architecture type of the tool binary to setup. The action will auto-detect the architecture (`amd64` or `arm64`) and use it as appropriate at runtime. Specify the architecture type (`amd64` or `arm64`) only if you need to force it.|
 |`setup-tools`|`false`|`""`|List of tool name to setup. By default, the action download and setup all supported Kubernetes tools. By specifying `setup-tools` you can choose which tools the action setup. Supported separator is `return` in multi-line string. Supported tools are `kubectl`, `kustomize`, `helm`, `helmv3`,  `kubeval`, `conftest`, `yq`, `rancher`, `tilt`, `skaffold`, `kube-score`|
-|`kubectl`|`false`|`1.24.10`| kubectl version. kubectl vesion can be found [here](https://github.com/kubernetes/kubernetes/releases)|
-|`kustomize`|`false`|`5.0.0`| kustomize version. kustomize vesion can be found [here](https://github.com/kubernetes-sigs/kustomize/releases)|
-|`helm`|`false`|`3.11.1`| helm version. helm vesion can be found [here](https://github.com/helm/helm/releases)|
-|`kubeval`|`false`|`0.16.1`| kubeval version (must be **0.16.1+**). kubeval vesion can be found [here](https://github.com/instrumenta/kubeval/releases).<br> NOTE: this parameter is deprecating as `kubeval` is no longer maintained. A good replacement is [kubeconform](https://github.com/yannh/kubeconform). See also [this](https://github.com/instrumenta/kubeval) for more details.|
-|`kubeconform`|`false`|`0.5.0`| kubeconform version. kubeconform vesion can be found [here](https://github.com/yannh/kubeconform/releases)|
-|`conftest`|`false`|`0.39.0`| conftest version. conftest vesion can be found [here](https://github.com/open-policy-agent/conftest/releases)|
-|`yq`|`false`|`4.30.7`| yq version. yq vesion can be found [here](https://github.com/mikefarah/yq/releases/)|
-|`rancher`|`false`|`2.7.0`| Rancher CLI version. Rancher CLI vesion can be found [here](https://github.com/rancher/cli/releases)|
-|`tilt`|`false`|`0.31.2`| Tilt version. Tilt vesion can be found [here](https://github.com/tilt-dev/tilt/releases)|
-|`skaffold`|`false`|`2.1.0`| Skaffold version. Skaffold vesion can be found [here](https://github.com/GoogleContainerTools/skaffold/releases)|
-|`kube-score`|`false`|`1.16.1`| kube-score version. kube-score vesion can be found [here](https://github.com/zegl/kube-score/releases)|
+|`kubectl`|`false`|`latest`| kubectl version or `latest`. kubectl versions can be found [here](https://github.com/kubernetes/kubernetes/releases)|
+|`kustomize`|`false`|`latest`| kustomize version or `latest`. kustomize versions can be found [here](https://github.com/kubernetes-sigs/kustomize/releases)|
+|`helm`|`false`|`latest`| helm version or `latest`. helm versions can be found [here](https://github.com/helm/helm/releases)|
+|`kubeval`|`false`|`latest`| kubeval version (must be **0.16.1+**) or `latest`. kubeval versions can be found [here](https://github.com/instrumenta/kubeval/releases).<br> NOTE: this parameter is deprecating as `kubeval` is no longer maintained. A good replacement is [kubeconform](https://github.com/yannh/kubeconform). See also [this](https://github.com/instrumenta/kubeval) for more details.|
+|`kubeconform`|`false`|`latest`| kubeconform version or `latest`. kubeconform versions can be found [here](https://github.com/yannh/kubeconform/releases)|
+|`conftest`|`false`|`latest`| conftest version or `latest`. conftest versions can be found [here](https://github.com/open-policy-agent/conftest/releases)|
+|`yq`|`false`|`latest`| yq version or `latest`. yq versions can be found [here](https://github.com/mikefarah/yq/releases/)|
+|`rancher`|`false`|`latest`| Rancher CLI version or `latest`. Rancher CLI versions can be found [here](https://github.com/rancher/cli/releases)|
+|`tilt`|`false`|`latest`| Tilt version or `latest`. Tilt versions can be found [here](https://github.com/tilt-dev/tilt/releases)|
+|`skaffold`|`false`|`latest`| Skaffold version or `latest`. Skaffold versions can be found [here](https://github.com/GoogleContainerTools/skaffold/releases)|
+|`kube-score`|`false`|`latest`| kube-score version or `latest`. kube-score versions can be found [here](https://github.com/zegl/kube-score/releases)|
 
-> - Supported Environments: Linux
-> - From v0.7.0, the action supports tool version 'v' prefix. Prior to v0.7.0, the action only accept the tool version without 'v' prefix but from v0.7.0 the action automatically add/remove the prefix as necessary
-> 
+> [!NOTE]
+> - Supported Environments: `Linux`
+> - From `v0.7.0`, the action supports tool version 'v' prefix. Prior to v0.7.0, the action only accept the tool version without 'v' prefix but from v0.7.0 the action automatically add/remove the prefix as necessary
+> - From `v0.13.0`, all tools use `latest` as the default version. However, using `latest` can make builds non-reproducible, as the installed version may change over time. For stable and repeatable builds, **it is recommended to specify exact versions**
+>
 ### Outputs
 |Parameter|Description|
 |:--:|:--|
@@ -44,13 +46,13 @@ A GitHub Action that setup Kubernetes tools (kubectl, kustomize, helm, kubeconfo
 
 ### Sample Workflow
 
-Specific versions for the commands can be setup by adding inputs parameters like this:
+Pinned versions (reproducible):
 
 ```yaml
   test: 
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - uses: yokawasa/action-setup-kube-tools@v0.12.0
       with:
         kubectl: '1.25'
@@ -75,14 +77,14 @@ Specific versions for the commands can be setup by adding inputs parameters like
         kube-score version
 ```
 
-Default versions for the commands will be setup if you don't give any inputs like this:
+Default behavior (latest) — no inputs:
 
 ```yaml
   test: 
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: yokawasa/action-setup-kube-tools@v0.12.0
+    - uses: actions/checkout@v4
+    - uses: yokawasa/action-setup-kube-tools@v0.13.0
     - run: |
         kubectl version --client
         kustomize version
@@ -96,24 +98,20 @@ Default versions for the commands will be setup if you don't give any inputs lik
         kube-score version
 ```
 
-By specifying setup-tools you can choose which tools the action setup. Supported separator is return in multi-line string like this
+Selecting tools with default latest versions (using `setup-tools`):
 
 ```yaml
   test: 
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: yokawasa/action-setup-kube-tools@v0.12.0
+    - uses: actions/checkout@v4
+    - uses: yokawasa/action-setup-kube-tools@v0.13.0
       with:
         setup-tools: |
           kubectl
           helm
           kustomize
           skaffold
-        kubectl: '1.25'
-        helm: '3.11.1'
-        kustomize: '5.0.0'
-        skaffold: '2.1.0'
     - run: |
         kubectl version --client
         kustomize version
@@ -127,7 +125,7 @@ Architecture is automatically detected on the runner (amd64 or arm64). You can o
   test: 
     steps:
     - uses: actions/checkout@v4
-    - uses: yokawasa/action-setup-kube-tools@v0.12.0
+    - uses: yokawasa/action-setup-kube-tools@v0.13.0
       with:
         # arch-type is optional; uncomment to force arm64
         # arch-type: 'arm64'
@@ -136,16 +134,26 @@ Architecture is automatically detected on the runner (amd64 or arm64). You can o
           helm
           kustomize
           skaffold
-        kubectl: '1.25'
-        helm: '3.11.1'
-        kustomize: '5.0.0'
-        skaffold: '2.1.0'
     - run: |
         kubectl version --client
         kustomize version
         helm version
         skaffold version
+
+Explicit latest inputs (optional):
+
+```yaml
+  steps:
+  - uses: actions/checkout@v4
+  - uses: yokawasa/action-setup-kube-tools@v0.13.0
+    with:
+      kubectl: latest
+      helm: latest
+      kustomize: latest
+      skaffold: latest
 ```
+
+Note: Using `latest` makes builds non-reproducible since versions can change over time. Prefer pinning exact versions for stability.
 
 
 ## Developing the action
@@ -164,7 +172,7 @@ Finally push the results
 ```
 git add dist
 git commit -a -m "prod dependencies"
-git push origin releases/v0.12.X
+git push origin releases/v0.13.X
 ```
 
 ## References

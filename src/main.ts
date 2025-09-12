@@ -2,6 +2,7 @@ import * as os from 'os'
 import * as path from 'path'
 import * as util from 'util'
 import * as fs from 'fs'
+import * as https from 'https'
 
 import * as toolCache from '@actions/tool-cache'
 import * as core from '@actions/core'
@@ -127,6 +128,95 @@ function replacePlaceholders(
   return format.replace(/{ver}|{arch}/g, match => {
     return match === '{ver}' ? version : archType
   })
+}
+
+// Perform a simple HTTPS GET and return the response body as string
+async function httpGet(url: string): Promise<string> {
+  return await new Promise((resolve, reject) => {
+    const req = https.get(
+      url,
+      {
+        headers: {
+          'User-Agent': 'yokawasa/action-setup-kube-tools',
+          Accept: 'application/vnd.github+json'
+        }
+      },
+      res => {
+        if (!res.statusCode) {
+          reject(new Error(`Request failed: ${url}`))
+          return
+        }
+        if (
+          res.statusCode >= 300 &&
+          res.statusCode < 400 &&
+          res.headers.location
+        ) {
+          // Follow one level of redirect (sufficient for GitHub latest redirects)
+          httpGet(res.headers.location)
+            .then(resolve)
+            .catch(reject)
+          return
+        }
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          reject(new Error(`Request failed: ${url} (status ${res.statusCode})`))
+          return
+        }
+        let data = ''
+        res.on('data', chunk => (data += chunk))
+        res.on('end', () => resolve(data))
+      }
+    )
+    req.on('error', reject)
+  })
+}
+
+// Normalize tag to a bare version (strip prefixes like 'v' or 'kustomize/v')
+function normalizeTagToVersion(tag: string, toolName: string): string {
+  let t = tag.trim()
+  if (toolName === 'kustomize') {
+    if (t.startsWith('kustomize/')) {
+      t = t.substring('kustomize/'.length)
+    }
+  }
+  if (t.startsWith('v') || t.startsWith('V')) {
+    t = t.substring(1)
+  }
+  return t
+}
+
+async function getLatestVersion(toolName: string): Promise<string> {
+  try {
+    if (toolName === 'kubectl') {
+      const body = await httpGet('https://dl.k8s.io/release/stable.txt')
+      return normalizeTagToVersion(body, toolName)
+    }
+
+    const repoMap: {[key: string]: string} = {
+      kustomize: 'kubernetes-sigs/kustomize',
+      helm: 'helm/helm',
+      kubeval: 'instrumenta/kubeval',
+      kubeconform: 'yannh/kubeconform',
+      conftest: 'open-policy-agent/conftest',
+      yq: 'mikefarah/yq',
+      rancher: 'rancher/cli',
+      tilt: 'tilt-dev/tilt',
+      skaffold: 'GoogleContainerTools/skaffold',
+      'kube-score': 'zegl/kube-score'
+    }
+    const repo = repoMap[toolName]
+    if (!repo) {
+      throw new Error(`Unsupported tool for latest lookup: ${toolName}`)
+    }
+    const api = `https://api.github.com/repos/${repo}/releases/latest`
+    const json = await httpGet(api)
+    const meta = JSON.parse(json)
+    if (!meta || !meta.tag_name) {
+      throw new Error(`Unexpected response resolving latest for ${toolName}`)
+    }
+    return normalizeTagToVersion(String(meta.tag_name), toolName)
+  } catch (e) {
+    throw new Error(`Failed to resolve latest version for ${toolName}: ${e}`)
+  }
 }
 
 function getDownloadURL(
@@ -295,6 +385,26 @@ async function run() {
       }
       if (!toolVersion) {
         toolVersion = tool.defaultVersion
+      }
+      if (toolVersion === 'latest') {
+        try {
+          const resolved = await getLatestVersion(tool.name)
+          // eslint-disable-next-line no-console
+          console.log(`Resolved latest for ${tool.name}: ${resolved}`)
+          toolVersion = resolved
+        } catch (e) {
+          if (failFast) {
+            // eslint-disable-next-line no-console
+            console.log(`Exiting immediately (fail fast) - [Reason] ${e}`)
+            process.exit(1)
+          } else {
+            // eslint-disable-next-line no-console
+            console.log(
+              `Failed to resolve latest for ${tool.name}. Falling back to default ${tool.defaultVersion}`
+            )
+            toolVersion = tool.defaultVersion
+          }
+        }
       }
       if (archType === 'arm64' && !tool.supportArm) {
         // eslint-disable-next-line no-console

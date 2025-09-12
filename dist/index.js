@@ -6701,8 +6701,10 @@ var __webpack_exports__ = {};
 /* harmony import */ var path__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(1017);
 /* harmony import */ var util__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(3837);
 /* harmony import */ var fs__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(7147);
-/* harmony import */ var _actions_tool_cache__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(7784);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(2186);
+/* harmony import */ var https__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(5687);
+/* harmony import */ var _actions_tool_cache__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(7784);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(2186);
+
 
 
 
@@ -6815,6 +6817,86 @@ function replacePlaceholders(format, version, archType) {
         return match === '{ver}' ? version : archType;
     });
 }
+// Perform a simple HTTPS GET and return the response body as string
+async function httpGet(url) {
+    return await new Promise((resolve, reject) => {
+        const req = https__WEBPACK_IMPORTED_MODULE_4__.get(url, {
+            headers: {
+                'User-Agent': 'yokawasa/action-setup-kube-tools',
+                Accept: 'application/vnd.github+json'
+            }
+        }, res => {
+            if (!res.statusCode) {
+                reject(new Error(`Request failed: ${url}`));
+                return;
+            }
+            if (res.statusCode >= 300 &&
+                res.statusCode < 400 &&
+                res.headers.location) {
+                // Follow one level of redirect (sufficient for GitHub latest redirects)
+                httpGet(res.headers.location)
+                    .then(resolve)
+                    .catch(reject);
+                return;
+            }
+            if (res.statusCode < 200 || res.statusCode >= 300) {
+                reject(new Error(`Request failed: ${url} (status ${res.statusCode})`));
+                return;
+            }
+            let data = '';
+            res.on('data', chunk => (data += chunk));
+            res.on('end', () => resolve(data));
+        });
+        req.on('error', reject);
+    });
+}
+// Normalize tag to a bare version (strip prefixes like 'v' or 'kustomize/v')
+function normalizeTagToVersion(tag, toolName) {
+    let t = tag.trim();
+    if (toolName === 'kustomize') {
+        if (t.startsWith('kustomize/')) {
+            t = t.substring('kustomize/'.length);
+        }
+    }
+    if (t.startsWith('v') || t.startsWith('V')) {
+        t = t.substring(1);
+    }
+    return t;
+}
+async function getLatestVersion(toolName) {
+    try {
+        if (toolName === 'kubectl') {
+            const body = await httpGet('https://dl.k8s.io/release/stable.txt');
+            return normalizeTagToVersion(body, toolName);
+        }
+        const repoMap = {
+            kustomize: 'kubernetes-sigs/kustomize',
+            helm: 'helm/helm',
+            kubeval: 'instrumenta/kubeval',
+            kubeconform: 'yannh/kubeconform',
+            conftest: 'open-policy-agent/conftest',
+            yq: 'mikefarah/yq',
+            rancher: 'rancher/cli',
+            tilt: 'tilt-dev/tilt',
+            skaffold: 'GoogleContainerTools/skaffold',
+            'kube-score': 'zegl/kube-score'
+        };
+        const repo = repoMap[toolName];
+        if (!repo) {
+            throw new Error(`Unsupported tool for latest lookup: ${toolName}`);
+        }
+        const api = `https://api.github.com/repos/${repo}/releases/latest`;
+        const json = await httpGet(api);
+        const meta = JSON.parse(json);
+        if (!meta || !meta.tag_name) {
+            throw new Error(`Unexpected response resolving latest for ${toolName}`);
+        }
+        return normalizeTagToVersion(String(meta.tag_name), toolName);
+    }
+    catch (e) {
+        throw new Error(`Failed to resolve latest version for ${toolName}: ${e}`);
+    }
+}
 function getDownloadURL(commandName, version, archType) {
     let actualArchType = archType;
     let urlFormat = '';
@@ -6871,17 +6953,17 @@ function getDownloadURL(commandName, version, archType) {
     return replacePlaceholders(urlFormat, version, actualArchType);
 }
 async function downloadTool(version, archType, tool) {
-    let cachedToolPath = _actions_tool_cache__WEBPACK_IMPORTED_MODULE_4__.find(tool.name, version);
+    let cachedToolPath = _actions_tool_cache__WEBPACK_IMPORTED_MODULE_5__.find(tool.name, version);
     let commandPathInPackage = tool.commandPathInPackage;
     let commandPath = '';
     if (!cachedToolPath) {
         const downloadURL = getDownloadURL(tool.name, version, archType);
         try {
-            const packagePath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_4__.downloadTool(downloadURL);
+            const packagePath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_5__.downloadTool(downloadURL);
             if (tool.isArchived) {
                 const extractTarBaseDirPath = util__WEBPACK_IMPORTED_MODULE_2__.format('%s_%s', packagePath, tool.name);
                 fs__WEBPACK_IMPORTED_MODULE_3__.mkdirSync(extractTarBaseDirPath);
-                const extractedDirPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_4__.extractTar(packagePath, extractTarBaseDirPath);
+                const extractedDirPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_5__.extractTar(packagePath, extractTarBaseDirPath);
                 commandPathInPackage = replacePlaceholders(commandPathInPackage, version, archType);
                 commandPath = util__WEBPACK_IMPORTED_MODULE_2__.format('%s/%s', extractedDirPath, commandPathInPackage);
             }
@@ -6892,7 +6974,7 @@ async function downloadTool(version, archType, tool) {
         catch (exception) {
             throw new Error(`Download ${tool.name} Failed! (url: ${downloadURL})`);
         }
-        cachedToolPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_4__.cacheFile(commandPath, tool.name, tool.name, version);
+        cachedToolPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_5__.cacheFile(commandPath, tool.name, tool.name, version);
         // eslint-disable-next-line no-console
         console.log(`${tool.name} version '${version}' has been cached`);
     }
@@ -6910,18 +6992,17 @@ async function run() {
         throw new Error('The action only support Linux OS!');
     }
     let failFast = true;
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_5__.getInput('fail-fast', { required: false }).toLowerCase() === 'false') {
+    if (_actions_core__WEBPACK_IMPORTED_MODULE_6__.getInput('fail-fast', { required: false }).toLowerCase() === 'false') {
         failFast = false;
     }
-    // Auto-detect architecture; allow explicit override to arm64 if provided.
-    // Note: We intentionally do not force 'amd64' from input to avoid masking auto-detection defaults.
+    // Auto-detect architecture; allow explicit override to 'amd64' or 'arm64' if provided.
     let archType = detectArchType();
-    const inputArch = _actions_core__WEBPACK_IMPORTED_MODULE_5__.getInput('arch-type', { required: false }).toLowerCase();
-    if (inputArch === 'arm64') {
-        archType = 'arm64';
+    const inputArch = _actions_core__WEBPACK_IMPORTED_MODULE_6__.getInput('arch-type', { required: false }).toLowerCase();
+    if (inputArch === 'arm64' || inputArch === 'amd64') {
+        archType = inputArch;
     }
     let setupToolList = [];
-    const setupTools = _actions_core__WEBPACK_IMPORTED_MODULE_5__.getInput('setup-tools', { required: false }).trim();
+    const setupTools = _actions_core__WEBPACK_IMPORTED_MODULE_6__.getInput('setup-tools', { required: false }).trim();
     if (setupTools) {
         setupToolList = setupTools
             .split('\n')
@@ -6936,13 +7017,33 @@ async function run() {
         // By default, the action setup all supported Kubernetes tools, which mean
         // all tools can be setup when setuptools does not have any elements.
         if (setupToolList.length === 0 || setupToolList.includes(tool.name)) {
-            let toolVersion = _actions_core__WEBPACK_IMPORTED_MODULE_5__.getInput(tool.name, { required: false })
+            let toolVersion = _actions_core__WEBPACK_IMPORTED_MODULE_6__.getInput(tool.name, { required: false })
                 .toLowerCase();
             if (toolVersion && toolVersion.startsWith('v')) {
                 toolVersion = toolVersion.substr(1);
             }
             if (!toolVersion) {
                 toolVersion = tool.defaultVersion;
+            }
+            if (toolVersion === 'latest') {
+                try {
+                    const resolved = await getLatestVersion(tool.name);
+                    // eslint-disable-next-line no-console
+                    console.log(`Resolved latest for ${tool.name}: ${resolved}`);
+                    toolVersion = resolved;
+                }
+                catch (e) {
+                    if (failFast) {
+                        // eslint-disable-next-line no-console
+                        console.log(`Exiting immediately (fail fast) - [Reason] ${e}`);
+                        process.exit(1);
+                    }
+                    else {
+                        // eslint-disable-next-line no-console
+                        console.log(`Failed to resolve latest for ${tool.name}. Falling back to default ${tool.defaultVersion}`);
+                        toolVersion = tool.defaultVersion;
+                    }
+                }
             }
             if (archType === 'arm64' && !tool.supportArm) {
                 // eslint-disable-next-line no-console
@@ -6951,7 +7052,7 @@ async function run() {
             }
             try {
                 const cachedPath = await downloadTool(toolVersion, archType, tool);
-                _actions_core__WEBPACK_IMPORTED_MODULE_5__.addPath(path__WEBPACK_IMPORTED_MODULE_1__.dirname(cachedPath));
+                _actions_core__WEBPACK_IMPORTED_MODULE_6__.addPath(path__WEBPACK_IMPORTED_MODULE_1__.dirname(cachedPath));
                 toolPath = cachedPath;
             }
             catch (exception) {
@@ -6962,10 +7063,10 @@ async function run() {
                 }
             }
         }
-        _actions_core__WEBPACK_IMPORTED_MODULE_5__.setOutput(`${tool.name}-path`, toolPath);
+        _actions_core__WEBPACK_IMPORTED_MODULE_6__.setOutput(`${tool.name}-path`, toolPath);
     });
 }
-run().catch(_actions_core__WEBPACK_IMPORTED_MODULE_5__.setFailed);
+run().catch(_actions_core__WEBPACK_IMPORTED_MODULE_6__.setFailed);
 
 })();
 

@@ -16,48 +16,48 @@ inputs:
     description: 'List of tool name to setup. By default, the action download and setup all supported Kubernetes tools. By specifying "setup-tools" you can choose which tools the action setup. Supported separator is return in multi-line string. Supported tools are "kubectl", "kustomize", "helm", "helmv3", "kubeval", "conftest", "yq", "rancher", "tilt", "skaffold", "kube-score"'
   kubectl:
     required: false
-    default: '1.24.10'
-    description: 'kubectl version'
+    default: 'latest'
+    description: "kubectl version or 'latest'"
   kustomize:
     required: false
-    default: '5.0.0'
-    description: 'kustomize version'
+    default: 'latest'
+    description: "kustomize version or 'latest'"
   helm:
     required: false
-    default: '3.11.1'
-    description: 'helm version'
+    default: 'latest'
+    description: "helm version or 'latest'"
   kubeval:
     required: false
-    default: '0.16.1'
-    description: 'kubeval version'
+    default: 'latest'
+    description: "kubeval version or 'latest'"
   kubeconform:
     required: false
-    default: '0.5.0'
-    description: 'kubeconform version'
+    default: 'latest'
+    description: "kubeconform version or 'latest'"
   conftest:
     required: false
-    default: '0.39.0'
-    description: 'conftest version'
+    default: 'latest'
+    description: "conftest version or 'latest'"
   yq:
     required: false
-    default: '4.30.7'
-    description: 'yq version'
+    default: 'latest'
+    description: "yq version or 'latest'"
   rancher:
     required: false
-    default: '2.7.0'
-    description: 'rancher cli version'
+    default: 'latest'
+    description: "rancher cli version or 'latest'"
   tilt:
     required: false
-    default: '0.31.2'
-    description: 'tilt version'
+    default: 'latest'
+    description: "tilt version or 'latest'"
   skaffold:
     required: false
-    default: '2.1.0'
-    description: 'skaffold version'
+    default: 'latest'
+    description: "skaffold version or 'latest'"
   kube-score:
     required: false
-    default: '1.16.1'
-    description: 'kube-score version'
+    default: 'latest'
+    description: "kube-score version or 'latest'"
 outputs:
   kubectl-path:
     description: 'kubectl command path if the action setup the tool, otherwise empty string'
