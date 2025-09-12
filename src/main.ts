@@ -301,7 +301,9 @@ async function run() {
 
   // Auto-detect architecture; allow explicit override to 'amd64' or 'arm64' if provided.
   let archType = detectArchType()
+  console.log(`Detected archType: ${archType}`)
   const inputArch = core.getInput('arch-type', {required: false}).toLowerCase()
+  console.log(`input archType: ${inputArch}`)
   if (inputArch === 'arm64' || inputArch === 'amd64') {
     archType = inputArch
   }
