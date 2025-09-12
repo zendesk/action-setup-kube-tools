@@ -53,7 +53,7 @@ function replacePlaceholders(
 
 // Perform a simple HTTPS GET and return the response body as string
 async function httpGet(url: string): Promise<string> {
-  return await new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const req = https.get(
       url,
       {
