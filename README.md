@@ -10,7 +10,7 @@ A GitHub Action that setup Kubernetes tools (kubectl, kustomize, helm, kubeconfo
 |Parameter|Required|Default Value|Description|
 |:--:|:--:|:--:|:--|
 |`fail-fast`|`false`|`true`| the action immediately fails when it fails to download (ie. due to a bad version) |
-|`arch-type`|`false`|`amd64`| Optional. The processor architecture type of the tool binary to setup. The action will auto-detect the architecture (`amd64` or `arm64`) and use it as appropriate at runtime. Specify the architecture type (`amd64` or `arm64`) only if you need to force it.|
+|`arch-type`|`false`|`""`| Optional. The processor architecture type of the tool binary to setup. The action will auto-detect the architecture (`amd64` or `arm64`) and use it as appropriate at runtime. Specify the architecture type (`amd64` or `arm64`) only if you need to force it.|
 |`setup-tools`|`false`|`""`|List of tool name to setup. By default, the action download and setup all supported Kubernetes tools. By specifying `setup-tools` you can choose which tools the action setup. Supported separator is `return` in multi-line string. Supported tools are `kubectl`, `kustomize`, `helm`, `helmv3`,  `kubeval`, `conftest`, `yq`, `rancher`, `tilt`, `skaffold`, `kube-score`|
 |`kubectl`|`false`|`latest`| kubectl version or `latest`. kubectl versions can be found [here](https://github.com/kubernetes/kubernetes/releases)|
 |`kustomize`|`false`|`latest`| kustomize version or `latest`. kustomize versions can be found [here](https://github.com/kubernetes-sigs/kustomize/releases)|
