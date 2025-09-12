@@ -152,7 +152,7 @@ async function getLatestVersion(toolName: string): Promise<string> {
     try {
       meta = JSON.parse(json)
     } catch (e) {
-      // Truncate the response for safety if it's too long
+      // Truncate the response for safety if it's too long: #75
       const truncatedJson = json && json.length > 500 ? json.substring(0, 500) + '...[truncated]' : json;
       throw new Error(`Failed to parse JSON response from ${api} for ${toolName}: ${e}. Response: ${truncatedJson}`)
     }
