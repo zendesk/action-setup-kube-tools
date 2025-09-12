@@ -8,7 +8,6 @@ inputs:
     description: 'the action immediately fails when it fails to download (ie. due to a bad version)'
   arch-type:
     required: false
-    default: 'amd64'
     description: 'Optional. The processor architecture type of the tool binary to setup. The action will auto-detect the architecture ("amd64" or "arm64") and use it as appropriate at runtime. Specify the architecture type ("amd64" or "arm64") only if you need to force it.'
   setup-tools:
     required: false
