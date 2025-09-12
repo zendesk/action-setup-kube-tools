@@ -53,7 +53,7 @@ Pinned versions (reproducible):
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: yokawasa/action-setup-kube-tools@v0.12.0
+    - uses: yokawasa/action-setup-kube-tools@v0.13.0
       with:
         kubectl: '1.25'
         kustomize: '5.0.0'
