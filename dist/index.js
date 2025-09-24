@@ -6551,6 +6551,14 @@ module.exports = v4;
 
 /***/ }),
 
+/***/ 2965:
+/***/ ((module) => {
+
+module.exports = eval("require")("./constants");
+
+
+/***/ }),
+
 /***/ 9491:
 /***/ ((module) => {
 
@@ -6704,6 +6712,7 @@ var __webpack_exports__ = {};
 /* harmony import */ var https__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(5687);
 /* harmony import */ var _actions_tool_cache__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(7784);
 /* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(2186);
+/* harmony import */ var _constants__WEBPACK_IMPORTED_MODULE_7__ = __nccwpck_require__(2965);
 
 
 
@@ -6711,18 +6720,7 @@ var __webpack_exports__ = {};
 
 
 
-const defaultProcessorArchType = 'amd64';
-const defaultKubectlVersion = '1.34.1';
-const defaultKustomizeVersion = '5.7.1';
-const defaultHelmVersion = '3.19.0';
-const defaultKubevalVersion = '0.16.1';
-const defaultKubeconformVersion = '0.7.0';
-const defaultConftestVersion = '0.62.0';
-const defaultYqVersion = '4.47.2';
-const defaultRancherVersion = '2.12.1';
-const defaultTiltVersion = '0.35.1';
-const defaultSkaffoldVersion = '2.16.1';
-const defaultKubeScoreVersion = '1.20.0';
+
 // Determine the processor architecture type based on the current runtime.
 // Maps Node's os.arch() to the values used by download URLs: 'amd64' | 'arm64'
 function detectArchType() {
@@ -6730,82 +6728,82 @@ function detectArchType() {
     if (nodeArch === 'arm64' || nodeArch === 'aarch64') {
         return 'arm64';
     }
-    return defaultProcessorArchType;
+    return _constants__WEBPACK_IMPORTED_MODULE_7__.defaultProcessorArchType;
 }
 const Tools = [
     {
         name: 'kubectl',
-        defaultVersion: defaultKubectlVersion,
+        defaultVersion: _constants__WEBPACK_IMPORTED_MODULE_7__.defaultKubectlVersion,
         isArchived: false,
         supportArm: true,
         commandPathInPackage: 'kubectl'
     },
     {
         name: 'kustomize',
-        defaultVersion: defaultKustomizeVersion,
+        defaultVersion: _constants__WEBPACK_IMPORTED_MODULE_7__.defaultKustomizeVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'kustomize'
     },
     {
         name: 'helm',
-        defaultVersion: defaultHelmVersion,
+        defaultVersion: _constants__WEBPACK_IMPORTED_MODULE_7__.defaultHelmVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'linux-{arch}/helm'
     },
     {
         name: 'kubeval',
-        defaultVersion: defaultKubevalVersion,
+        defaultVersion: _constants__WEBPACK_IMPORTED_MODULE_7__.defaultKubevalVersion,
         isArchived: true,
         supportArm: false,
         commandPathInPackage: 'kubeval'
     },
     {
         name: 'kubeconform',
-        defaultVersion: defaultKubeconformVersion,
+        defaultVersion: _constants__WEBPACK_IMPORTED_MODULE_7__.defaultKubeconformVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'kubeconform'
     },
     {
         name: 'conftest',
-        defaultVersion: defaultConftestVersion,
+        defaultVersion: _constants__WEBPACK_IMPORTED_MODULE_7__.defaultConftestVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'conftest'
     },
     {
         name: 'yq',
-        defaultVersion: defaultYqVersion,
+        defaultVersion: _constants__WEBPACK_IMPORTED_MODULE_7__.defaultYqVersion,
         isArchived: false,
         supportArm: true,
         commandPathInPackage: 'yq_linux_{arch}'
     },
     {
         name: 'rancher',
-        defaultVersion: defaultRancherVersion,
+        defaultVersion: _constants__WEBPACK_IMPORTED_MODULE_7__.defaultRancherVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'rancher-v{ver}/rancher'
     },
     {
         name: 'tilt',
-        defaultVersion: defaultTiltVersion,
+        defaultVersion: _constants__WEBPACK_IMPORTED_MODULE_7__.defaultTiltVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'tilt'
     },
     {
         name: 'skaffold',
-        defaultVersion: defaultSkaffoldVersion,
+        defaultVersion: _constants__WEBPACK_IMPORTED_MODULE_7__.defaultSkaffoldVersion,
         isArchived: false,
         supportArm: true,
         commandPathInPackage: 'skaffold-linux-{arch}'
     },
     {
         name: 'kube-score',
-        defaultVersion: defaultKubeScoreVersion,
+        defaultVersion: _constants__WEBPACK_IMPORTED_MODULE_7__.defaultKubeScoreVersion,
         isArchived: false,
         supportArm: true,
         commandPathInPackage: 'kube-score'

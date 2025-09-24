@@ -7,19 +7,20 @@ import * as https from 'https'
 import * as toolCache from '@actions/tool-cache'
 import * as core from '@actions/core'
 
-const defaultProcessorArchType = 'amd64'
-
-const defaultKubectlVersion = '1.34.1'
-const defaultKustomizeVersion = '5.7.1'
-const defaultHelmVersion = '3.19.0'
-const defaultKubevalVersion = '0.16.1'
-const defaultKubeconformVersion = '0.7.0'
-const defaultConftestVersion = '0.62.0'
-const defaultYqVersion = '4.47.2'
-const defaultRancherVersion = '2.12.1'
-const defaultTiltVersion = '0.35.1'
-const defaultSkaffoldVersion = '2.16.1'
-const defaultKubeScoreVersion = '1.20.0'
+import {
+  defaultProcessorArchType,
+  defaultKubectlVersion,
+  defaultKustomizeVersion,
+  defaultHelmVersion,
+  defaultKubevalVersion,
+  defaultKubeconformVersion,
+  defaultConftestVersion,
+  defaultYqVersion,
+  defaultRancherVersion,
+  defaultTiltVersion,
+  defaultSkaffoldVersion,
+  defaultKubeScoreVersion
+} from './constants'
 
 // Determine the processor architecture type based on the current runtime.
 // Maps Node's os.arch() to the values used by download URLs: 'amd64' | 'arm64'
