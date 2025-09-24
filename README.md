@@ -53,17 +53,17 @@ Pinned versions (reproducible):
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: yokawasa/action-setup-kube-tools@v0.13.0
+    - uses: yokawasa/action-setup-kube-tools@v0.13.1
       with:
-        kubectl: '1.25'
-        kustomize: '5.0.0'
-        helm: '3.11.1'
-        kubeconform: '0.5.0'
-        conftest: '0.39.0'
-        rancher: '2.7.0'
-        tilt: '0.31.2'
-        skaffold: '2.1.0'
-        kube-score: '1.16.1'
+        kubectl: '1.34.1'
+        kustomize: '5.7.1'
+        helm: '3.19.0'
+        kubeconform: '0.7.0'
+        conftest: '0.62.0'
+        rancher: '2.12.1'
+        tilt: '0.35.2'
+        skaffold: '2.16.1'
+        kube-score: '1.20.0'
     - run: |
         kubectl version --client
         kustomize version
@@ -77,14 +77,14 @@ Pinned versions (reproducible):
         kube-score version
 ```
 
-Default behavior (latest) — no inputs:
+Default versions for the commands will be setup if you don't give any inputs like this:
 
 ```yaml
   test: 
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: yokawasa/action-setup-kube-tools@v0.13.0
+    - uses: yokawasa/action-setup-kube-tools@v0.13.1
     - run: |
         kubectl version --client
         kustomize version
@@ -98,20 +98,24 @@ Default behavior (latest) — no inputs:
         kube-score version
 ```
 
-Selecting tools with default latest versions (using `setup-tools`):
+By specifying setup-tools you can choose which tools the action setup. Supported separator is return in multi-line string like this
 
 ```yaml
   test: 
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: yokawasa/action-setup-kube-tools@v0.13.0
+    - uses: yokawasa/action-setup-kube-tools@v0.13.1
       with:
         setup-tools: |
           kubectl
           helm
           kustomize
           skaffold
+        kubectl: '1.25'
+        helm: '3.11.1'
+        kustomize: '5.0.0'
+        skaffold: '2.1.0'
     - run: |
         kubectl version --client
         kustomize version
@@ -125,7 +129,7 @@ Architecture is automatically detected on the runner (amd64 or arm64). You can o
   test: 
     steps:
     - uses: actions/checkout@v4
-    - uses: yokawasa/action-setup-kube-tools@v0.13.0
+    - uses: yokawasa/action-setup-kube-tools@v0.13.1
       with:
         # arch-type is optional; uncomment to force arm64
         # arch-type: 'arm64'
@@ -134,23 +138,41 @@ Architecture is automatically detected on the runner (amd64 or arm64). You can o
           helm
           kustomize
           skaffold
+        kubectl: '1.25'
+        helm: '3.11.1'
+        kustomize: '5.0.0'
+        skaffold: '2.1.0'
     - run: |
         kubectl version --client
         kustomize version
         helm version
         skaffold version
+```
 
 Explicit latest inputs (optional):
 
 ```yaml
-  steps:
-  - uses: actions/checkout@v4
-  - uses: yokawasa/action-setup-kube-tools@v0.13.0
-    with:
-      kubectl: latest
-      helm: latest
-      kustomize: latest
-      skaffold: latest
+  test: 
+    steps:
+    - uses: actions/checkout@v4
+    - uses: yokawasa/action-setup-kube-tools@v0.13.1
+      with:
+        # arch-type is optional; uncomment to force arm64
+        # arch-type: 'arm64'
+        setup-tools: |
+          kubectl
+          helm
+          kustomize
+          skaffold
+        kubectl: latest
+        helm: latest
+        kustomize: latest
+        skaffold: latest
+    - run: |
+        kubectl version --client
+        kustomize version
+        helm version
+        skaffold version
 ```
 
 Note: Using `latest` makes builds non-reproducible since versions can change over time. Prefer pinning exact versions for stability.
