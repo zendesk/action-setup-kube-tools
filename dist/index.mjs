@@ -6697,104 +6697,127 @@ module.exports = __WEBPACK_EXTERNAL_createRequire(import.meta.url)("util");
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-/* harmony import */ var os__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2037);
-/* harmony import */ var path__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(1017);
-/* harmony import */ var util__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(3837);
-/* harmony import */ var fs__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(7147);
-/* harmony import */ var https__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(5687);
-/* harmony import */ var _actions_tool_cache__WEBPACK_IMPORTED_MODULE_5__ = __nccwpck_require__(7784);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_6__ = __nccwpck_require__(2186);
 
-
-
-
-
-
-
+// EXTERNAL MODULE: external "os"
+var external_os_ = __nccwpck_require__(2037);
+// EXTERNAL MODULE: external "path"
+var external_path_ = __nccwpck_require__(1017);
+// EXTERNAL MODULE: external "util"
+var external_util_ = __nccwpck_require__(3837);
+// EXTERNAL MODULE: external "fs"
+var external_fs_ = __nccwpck_require__(7147);
+// EXTERNAL MODULE: external "https"
+var external_https_ = __nccwpck_require__(5687);
+// EXTERNAL MODULE: ./node_modules/@actions/tool-cache/lib/tool-cache.js
+var tool_cache = __nccwpck_require__(7784);
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+;// CONCATENATED MODULE: ./src/constants.ts
 const defaultProcessorArchType = 'amd64';
+const defaultKubectlVersion = '1.34.1';
+const defaultKustomizeVersion = '5.7.1';
+const defaultHelmVersion = '3.19.0';
+const defaultKubevalVersion = '0.16.1';
+const defaultKubeconformVersion = '0.7.0';
+const defaultConftestVersion = '0.62.0';
+const defaultYqVersion = '4.47.2';
+const defaultRancherVersion = '2.12.1';
+const defaultTiltVersion = '0.35.1';
+const defaultSkaffoldVersion = '2.16.1';
+const defaultKubeScoreVersion = '1.20.0';
+
+;// CONCATENATED MODULE: ./src/main.ts
+
+
+
+
+
+
+
+
 // Determine the processor architecture type based on the current runtime.
 // Maps Node's os.arch() to the values used by download URLs: 'amd64' | 'arm64'
 function detectArchType() {
-    const nodeArch = os__WEBPACK_IMPORTED_MODULE_0__.arch().toLowerCase();
+    const nodeArch = external_os_.arch().toLowerCase();
     if (nodeArch === 'arm64' || nodeArch === 'aarch64') {
         return 'arm64';
     }
-    return 'amd64';
+    return defaultProcessorArchType;
 }
 const Tools = [
     {
         name: 'kubectl',
-        defaultVersion: 'latest',
+        defaultVersion: defaultKubectlVersion,
         isArchived: false,
         supportArm: true,
         commandPathInPackage: 'kubectl'
     },
     {
         name: 'kustomize',
-        defaultVersion: 'latest',
+        defaultVersion: defaultKustomizeVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'kustomize'
     },
     {
         name: 'helm',
-        defaultVersion: 'latest',
+        defaultVersion: defaultHelmVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'linux-{arch}/helm'
     },
     {
         name: 'kubeval',
-        defaultVersion: 'latest',
+        defaultVersion: defaultKubevalVersion,
         isArchived: true,
         supportArm: false,
         commandPathInPackage: 'kubeval'
     },
     {
         name: 'kubeconform',
-        defaultVersion: 'latest',
+        defaultVersion: defaultKubeconformVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'kubeconform'
     },
     {
         name: 'conftest',
-        defaultVersion: 'latest',
+        defaultVersion: defaultConftestVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'conftest'
     },
     {
         name: 'yq',
-        defaultVersion: 'latest',
+        defaultVersion: defaultYqVersion,
         isArchived: false,
         supportArm: true,
         commandPathInPackage: 'yq_linux_{arch}'
     },
     {
         name: 'rancher',
-        defaultVersion: 'latest',
+        defaultVersion: defaultRancherVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'rancher-v{ver}/rancher'
     },
     {
         name: 'tilt',
-        defaultVersion: 'latest',
+        defaultVersion: defaultTiltVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'tilt'
     },
     {
         name: 'skaffold',
-        defaultVersion: 'latest',
+        defaultVersion: defaultSkaffoldVersion,
         isArchived: false,
         supportArm: true,
         commandPathInPackage: 'skaffold-linux-{arch}'
     },
     {
         name: 'kube-score',
-        defaultVersion: 'latest',
+        defaultVersion: defaultKubeScoreVersion,
         isArchived: false,
         supportArm: true,
         commandPathInPackage: 'kube-score'
@@ -6809,7 +6832,7 @@ function replacePlaceholders(format, version, archType) {
 // Perform a simple HTTPS GET and return the response body as string
 async function httpGet(url) {
     return new Promise((resolve, reject) => {
-        const req = https__WEBPACK_IMPORTED_MODULE_4__.get(url, {
+        const req = external_https_.get(url, {
             headers: {
                 'User-Agent': 'yokawasa/action-setup-kube-tools',
                 Accept: 'application/vnd.github+json'
@@ -6822,7 +6845,7 @@ async function httpGet(url) {
             if (res.statusCode >= 300 &&
                 res.statusCode < 400 &&
                 res.headers.location) {
-                //// SSRF attach protection (Disabled for now to avoid many allowed domain changes) 
+                //// SSRF attach protection (Disabled for now to avoid many allowed domain changes)
                 // Validate redirect location domain to avoid SSRF attack before following it.
                 // Need to add domain names to allow as needed in the future
                 // try {
@@ -6980,19 +7003,19 @@ function getDownloadURL(commandName, version, archType) {
     return replacePlaceholders(urlFormat, version, actualArchType);
 }
 async function downloadTool(version, archType, tool) {
-    let cachedToolPath = _actions_tool_cache__WEBPACK_IMPORTED_MODULE_5__.find(tool.name, version);
+    let cachedToolPath = tool_cache.find(tool.name, version);
     let commandPathInPackage = tool.commandPathInPackage;
     let commandPath = '';
     if (!cachedToolPath) {
         const downloadURL = getDownloadURL(tool.name, version, archType);
         try {
-            const packagePath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_5__.downloadTool(downloadURL);
+            const packagePath = await tool_cache.downloadTool(downloadURL);
             if (tool.isArchived) {
-                const extractTarBaseDirPath = util__WEBPACK_IMPORTED_MODULE_2__.format('%s_%s', packagePath, tool.name);
-                fs__WEBPACK_IMPORTED_MODULE_3__.mkdirSync(extractTarBaseDirPath);
-                const extractedDirPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_5__.extractTar(packagePath, extractTarBaseDirPath);
+                const extractTarBaseDirPath = external_util_.format('%s_%s', packagePath, tool.name);
+                external_fs_.mkdirSync(extractTarBaseDirPath);
+                const extractedDirPath = await tool_cache.extractTar(packagePath, extractTarBaseDirPath);
                 commandPathInPackage = replacePlaceholders(commandPathInPackage, version, archType);
-                commandPath = util__WEBPACK_IMPORTED_MODULE_2__.format('%s/%s', extractedDirPath, commandPathInPackage);
+                commandPath = external_util_.format('%s/%s', extractedDirPath, commandPathInPackage);
             }
             else {
                 commandPath = packagePath;
@@ -7001,7 +7024,7 @@ async function downloadTool(version, archType, tool) {
         catch (exception) {
             throw new Error(`Download ${tool.name} Failed! (url: ${downloadURL})`);
         }
-        cachedToolPath = await _actions_tool_cache__WEBPACK_IMPORTED_MODULE_5__.cacheFile(commandPath, tool.name, tool.name, version);
+        cachedToolPath = await tool_cache.cacheFile(commandPath, tool.name, tool.name, version);
         // eslint-disable-next-line no-console
         console.log(`${tool.name} version '${version}' has been cached`);
     }
@@ -7009,29 +7032,29 @@ async function downloadTool(version, archType, tool) {
         // eslint-disable-next-line no-console
         console.log(`Found in cache: ${tool.name} version '${version}'`);
     }
-    const cachedCommand = path__WEBPACK_IMPORTED_MODULE_1__.join(cachedToolPath, tool.name);
-    fs__WEBPACK_IMPORTED_MODULE_3__.chmodSync(cachedCommand, '777');
+    const cachedCommand = external_path_.join(cachedToolPath, tool.name);
+    external_fs_.chmodSync(cachedCommand, '777');
     return cachedCommand;
 }
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 async function run() {
-    if (!os__WEBPACK_IMPORTED_MODULE_0__.type().match(/^Linux/)) {
+    if (!external_os_.type().match(/^Linux/)) {
         throw new Error('The action only support Linux OS!');
     }
     let failFast = true;
-    if (_actions_core__WEBPACK_IMPORTED_MODULE_6__.getInput('fail-fast', { required: false }).toLowerCase() === 'false') {
+    if (core.getInput('fail-fast', { required: false }).toLowerCase() === 'false') {
         failFast = false;
     }
     // Auto-detect architecture; allow explicit override to 'amd64' or 'arm64' if provided.
     let archType = detectArchType();
     console.log(`Detected archType: ${archType}`);
-    const inputArch = _actions_core__WEBPACK_IMPORTED_MODULE_6__.getInput('arch-type', { required: false }).toLowerCase();
+    const inputArch = core.getInput('arch-type', { required: false }).toLowerCase();
     console.log(`input archType: ${inputArch}`);
     if (inputArch === 'arm64' || inputArch === 'amd64') {
         archType = inputArch;
     }
     let setupToolList = [];
-    const setupTools = _actions_core__WEBPACK_IMPORTED_MODULE_6__.getInput('setup-tools', { required: false }).trim();
+    const setupTools = core.getInput('setup-tools', { required: false }).trim();
     if (setupTools) {
         setupToolList = setupTools
             .split('\n')
@@ -7046,7 +7069,7 @@ async function run() {
         // By default, the action setup all supported Kubernetes tools, which mean
         // all tools can be setup when setuptools does not have any elements.
         if (setupToolList.length === 0 || setupToolList.includes(tool.name)) {
-            let toolVersion = _actions_core__WEBPACK_IMPORTED_MODULE_6__.getInput(tool.name, { required: false })
+            let toolVersion = core.getInput(tool.name, { required: false })
                 .toLowerCase();
             if (toolVersion && toolVersion.startsWith('v')) {
                 toolVersion = toolVersion.substr(1);
@@ -7079,7 +7102,7 @@ async function run() {
             }
             try {
                 const cachedPath = await downloadTool(toolVersion, archType, tool);
-                _actions_core__WEBPACK_IMPORTED_MODULE_6__.addPath(path__WEBPACK_IMPORTED_MODULE_1__.dirname(cachedPath));
+                core.addPath(external_path_.dirname(cachedPath));
                 toolPath = cachedPath;
             }
             catch (exception) {
@@ -7090,10 +7113,10 @@ async function run() {
                 }
             }
         }
-        _actions_core__WEBPACK_IMPORTED_MODULE_6__.setOutput(`${tool.name}-path`, toolPath);
+        core.setOutput(`${tool.name}-path`, toolPath);
     });
 }
-run().catch(_actions_core__WEBPACK_IMPORTED_MODULE_6__.setFailed);
+run().catch(core.setFailed);
 
 })();
 
