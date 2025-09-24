@@ -6712,6 +6712,17 @@ var __webpack_exports__ = {};
 
 
 const defaultProcessorArchType = 'amd64';
+const defaultKubectlVersion = '1.34.1';
+const defaultKustomizeVersion = '5.7.1';
+const defaultHelmVersion = '3.19.0';
+const defaultKubevalVersion = '0.16.1';
+const defaultKubeconformVersion = '0.7.0';
+const defaultConftestVersion = '0.62.0';
+const defaultYqVersion = '4.47.2';
+const defaultRancherVersion = '2.12.1';
+const defaultTiltVersion = '0.35.1';
+const defaultSkaffoldVersion = '2.16.1';
+const defaultKubeScoreVersion = '1.20.0';
 // Determine the processor architecture type based on the current runtime.
 // Maps Node's os.arch() to the values used by download URLs: 'amd64' | 'arm64'
 function detectArchType() {
@@ -6719,82 +6730,82 @@ function detectArchType() {
     if (nodeArch === 'arm64' || nodeArch === 'aarch64') {
         return 'arm64';
     }
-    return 'amd64';
+    return defaultProcessorArchType;
 }
 const Tools = [
     {
         name: 'kubectl',
-        defaultVersion: 'latest',
+        defaultVersion: defaultKubectlVersion,
         isArchived: false,
         supportArm: true,
         commandPathInPackage: 'kubectl'
     },
     {
         name: 'kustomize',
-        defaultVersion: 'latest',
+        defaultVersion: defaultKustomizeVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'kustomize'
     },
     {
         name: 'helm',
-        defaultVersion: 'latest',
+        defaultVersion: defaultHelmVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'linux-{arch}/helm'
     },
     {
         name: 'kubeval',
-        defaultVersion: 'latest',
+        defaultVersion: defaultKubevalVersion,
         isArchived: true,
         supportArm: false,
         commandPathInPackage: 'kubeval'
     },
     {
         name: 'kubeconform',
-        defaultVersion: 'latest',
+        defaultVersion: defaultKubeconformVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'kubeconform'
     },
     {
         name: 'conftest',
-        defaultVersion: 'latest',
+        defaultVersion: defaultConftestVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'conftest'
     },
     {
         name: 'yq',
-        defaultVersion: 'latest',
+        defaultVersion: defaultYqVersion,
         isArchived: false,
         supportArm: true,
         commandPathInPackage: 'yq_linux_{arch}'
     },
     {
         name: 'rancher',
-        defaultVersion: 'latest',
+        defaultVersion: defaultRancherVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'rancher-v{ver}/rancher'
     },
     {
         name: 'tilt',
-        defaultVersion: 'latest',
+        defaultVersion: defaultTiltVersion,
         isArchived: true,
         supportArm: true,
         commandPathInPackage: 'tilt'
     },
     {
         name: 'skaffold',
-        defaultVersion: 'latest',
+        defaultVersion: defaultSkaffoldVersion,
         isArchived: false,
         supportArm: true,
         commandPathInPackage: 'skaffold-linux-{arch}'
     },
     {
         name: 'kube-score',
-        defaultVersion: 'latest',
+        defaultVersion: defaultKubeScoreVersion,
         isArchived: false,
         supportArm: true,
         commandPathInPackage: 'kube-score'
@@ -6822,7 +6833,7 @@ async function httpGet(url) {
             if (res.statusCode >= 300 &&
                 res.statusCode < 400 &&
                 res.headers.location) {
-                //// SSRF attach protection (Disabled for now to avoid many allowed domain changes) 
+                //// SSRF attach protection (Disabled for now to avoid many allowed domain changes)
                 // Validate redirect location domain to avoid SSRF attack before following it.
                 // Need to add domain names to allow as needed in the future
                 // try {
